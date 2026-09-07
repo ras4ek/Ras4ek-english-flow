@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ETO ROSTIK // ULTIMATE CS2 HUB</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080b10;
+      --card-bg: rgba(15, 22, 32, 0.95);
+      --border: rgba(0, 162, 255, 0.25);
+      --cs-blue: #00a2ff;
+      --cs-gold: #e5a93c;
+      --cs-purple: #8847ff;
+      --cs-pink: #d32ee6;
+      --cs-red: #eb4b4b;
+      --cs-gray: #b0c3d9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+
+    body {
+      background-color: var(--bg);
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
+      background: radial-gradient(circle at 50% 20%, #111c2e 0%, #06080c 100%);
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(10, 14, 20, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 162, 255, 0.15);
+      backdrop-filter: blur(15px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 21, 30, 0.95);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--cs-blue), var(--cs-purple));
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      box-shadow: 0 0 10px var(--cs-blue);
+    }
+    .brand-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--cs-blue);
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(0, 162, 255, 0.6);
+    }
+    .user-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .balance-box {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      color: var(--cs-gold);
+      background: rgba(229, 169, 60, 0.1);
+      border: 1px solid rgba(229, 169, 60, 0.3);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--cs-blue);
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    .icon-btn:active { transform: scale(0.9); }
+
+    /* 3D WEAPON HERO */
+    .weapon-widget {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background: radial-gradient(circle at center, rgba(0, 162, 255, 0.12) 0%, rgba(0,0,0,0.6) 80%);
+      border-bottom: 1px solid var(--border);
+    }
+    #weapon-canvas { width: 100%; height: 100%; }
+    .weapon-label {
+      position: absolute;
+      bottom: 10px;
+      left: 15px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      color: #8b949e;
+    }
+    .weapon-label span { color: var(--cs-gold); font-weight: bold; }
+    .inspect-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* TABS NAV */
+    .tabs-nav {
+      display: flex;
+      background: rgba(12, 17, 24, 0.98);
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px 0;
+      background: none;
+      border: none;
+      color: #6e7681;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: 0.2s;
+      border-bottom: 2px solid transparent;
+      text-align: center;
+    }
+    .tab-btn.active {
+      color: var(--cs-blue);
+      border-bottom-color: var(--cs-blue);
+      background: rgba(0, 162, 255, 0.08);
+      text-shadow: 0 0 8px rgba(0, 162, 255, 0.5);
+    }
+
+    /* CONTENT AREA */
+    .content-area { padding: 15px; min-height: 280px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .cyber-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cyber-card:active { transform: scale(0.96); }
+    .card-title { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: #fff; font-weight: 700; }
+    .card-icon { font-size: 1.5rem; }
+    .card-desc { font-size: 0.68rem; color: #8b949e; line-height: 1.2; }
+
+    /* BANNER */
+    .case-banner {
+      width: 100%;
+      margin-top: 12px;
+      background: linear-gradient(135deg, rgba(0, 162, 255, 0.2), rgba(229, 169, 60, 0.2));
+      border: 1px solid var(--cs-blue);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .case-banner h3 { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; color: #fff; }
+    .case-banner p { font-size: 0.68rem; color: rgba(255,255,255,0.7); }
+    .btn-action {
+      background: var(--cs-blue);
+      color: #000;
+      border: none;
+      padding: 8px 14px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 162, 255, 0.4);
+    }
+
+    /* INVENTORY GRID */
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .inv-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      position: relative;
+    }
+    .inv-item-name { margin-top: 4px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+    .inv-item-price { color: var(--cs-gold); margin-top: 2px; }
+    .btn-sell {
+      margin-top: 6px;
+      width: 100%;
+      background: rgba(235, 75, 75, 0.2);
+      border: 1px solid var(--cs-red);
+      color: var(--cs-red);
+      font-size: 0.6rem;
+      padding: 3px 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* MODALS */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.25s ease;
+      padding: 15px;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-window {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(15, 21, 30, 0.98);
+      border: 1px solid var(--cs-blue);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 0 30px rgba(0, 162, 255, 0.25);
+      transform: translateY(20px);
+      transition: 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-overlay.open .modal-window { transform: translateY(0); }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+    .modal-title { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--cs-blue); text-transform: uppercase; }
+    .modal-close { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+    /* ROULETTE */
+    .roulette-container {
+      width: 100%;
+      height: 95px;
+      background: #05070a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      margin: 15px 0;
+    }
+    .roulette-marker {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 3px; height: 100%;
+      background: var(--cs-gold);
+      box-shadow: 0 0 8px var(--cs-gold);
+      z-index: 10;
+    }
+    .roulette-strip {
+      display: flex;
+      position: absolute;
+      left: 0; top: 10px;
+      gap: 8px;
+      padding: 0 10px;
+    }
+    .skin-card-roll {
+      width: 75px; height: 75px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      border-bottom: 3px solid #fff;
+      flex-shrink: 0;
+      padding: 4px;
+      text-align: center;
+    }
+
+    /* GAME CONTROLS & CANVASES */
+    .game-canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    canvas.game-canvas { background: #000; border: 2px solid var(--border); border-radius: 8px; }
+
+    .dpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 45px);
+      grid-template-rows: repeat(2, 45px);
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .dpad-btn {
+      background: rgba(0, 162, 255, 0.15);
+      border: 1px solid var(--cs-blue);
+      color: #fff;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .dpad-btn:active { background: var(--cs-blue); color: #000; }
+
+    /* CALCULATOR UI */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .calc-screen {
+      grid-column: span 4;
+      background: #000;
+      border: 1px solid var(--border);
+      color: var(--cs-blue);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      text-align: right;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      overflow: hidden;
+    }
+    .calc-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #30363d;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      padding: 12px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .calc-btn.op { background: rgba(0, 162, 255, 0.2); border-color: var(--cs-blue); color: var(--cs-blue); }
+    .calc-btn.eq { background: var(--cs-gold); color: #000; font-weight: bold; border: none; }
+    .calc-btn:active { transform: scale(0.95); }
+
+    /* CROSSHAIR CUSTOMIZER */
+    .crosshair-preview {
+      width: 100%;
+      height: 120px;
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .slider-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; font-size: 0.75rem; }
+    .slider-group input { width: 100%; accent-color: var(--cs-blue); }
+
+    .footer { text-align: center; font-size: 0.65rem; color: #4a5568; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <div class="brand">
+        <div class="logo-icon"></div>
+        <div class="brand-title">ETO ROSTIK</div>
+      </div>
+      <div class="user-stats">
+        <div class="balance-box">$<span id="user-balance">500</span></div>
+        <button class="icon-btn" id="sound-toggle">🔊</button>
+        <button class="icon-btn" onclick="openModal('modal-profile')">👤</button>
+      </div>
+    </header>
+
+    <div class="weapon-widget">
+      <canvas id="weapon-canvas"></canvas>
+      <div class="weapon-label">ОРУЖИЕ: <span>USP-S | TACTICAL</span></div>
+      <div class="weapon-hint">‹ ТАЩИ МЫШЬ / ПАЛЕЦ ›</div>
+    </div>
+
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="apps">ПРИЛОЖЕНИЯ</button>
+      <button class="tab-btn" data-tab="games">ИГРЫ</button>
+      <button class="tab-btn" data-tab="tools">УТИЛИТЫ</button>
+      <button class="tab-btn" data-tab="inventory">ИНВЕНТАРЬ</button>
+    </nav>
+
+    <main class="content-area">
+      <!-- ТАБ 1: ПРИЛОЖЕНИЯ -->
+      <div class="tab-pane active" id="pane-apps">
+        <div class="grid-2">
+          <div class="cyber-card" onclick="openModal('modal-ai')">
+            <div class="card-icon">🤖</div>
+            <div class="card-title">ИИ ТАКТИК</div>
+            <div class="card-desc">Генератор раундов и смоков</div>
+          </div>
+          <div class="cyber-card" onclick="openModal('modal-stats')">
+            <div class="card-icon">📊</div>
+            <div class="card-title">МОНИТОР</div>
+            <div class="card-desc">FPS и реальный пинг</div>
+          </div>
+        </div>
+        <div class="case-banner" onclick="openModal('modal-case')">
+          <div>
+            <h3>CS2 КЕЙС-ХАБ ($100)</h3>
+            <p>Испытай удачу и выбей Knife / Covert</p>
+          </div>
+          <button class="btn-action">ОТКРЫТЬ</button>
+        </div>
+      </div>
+
+      <!-- ТАБ 2: ИГРЫ -->
+      <div class="tab-pane" id="pane-games">
+        <div class="grid-2">
+          <div class="cyber-card" onclick="openModal('modal-tetris'); initTetris();">
+            <div class="card-icon">🧱</div>
+            <div class="card-title">ТЕТРИС</div>
+            <div class="card-desc">Полная игра с сенсорным управлением</div>
+          </div>
+          <div class="cyber-card" onclick="openModal('modal-snake'); initSnake();">
+            <div class="card-icon">🐍</div>
+            <div class="card-title">ЗМЕЙКА</div>
+            <div class="card-desc">Классика CS:GO оффлайн</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ТАБ 3: УТИЛИТЫ -->
+      <div class="tab-pane" id="pane-tools">
+        <div class="grid-2">
+          <div class="cyber-card" onclick="openModal('modal-calc')">
+            <div class="card-icon">🧮</div>
+            <div class="card-title">КАЛЬКУЛЯТОР</div>
+            <div class="card-desc">Быстрый калькулятор экономки</div>
+          </div>
+          <div class="cyber-card" onclick="openModal('modal-crosshair')">
+            <div class="card-icon">🎯</div>
+            <div class="card-title">ПРИЦЕЛ CS2</div>
+            <div class="card-desc">Кастомизация и код прицела</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ТАБ 4: ИНВЕНТАРЬ -->
+      <div class="tab-pane" id="pane-inventory">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-family:'Orbitron'; font-size:0.8rem; color:#8b949e;">ТВОИ СКИНЫ:</span>
+          <button class="btn-action" style="padding:4px 8px; font-size:0.6rem;" onclick="sellAllSkins()">PRODAT' VSE</button>
+        </div>
+        <div class="inventory-grid" id="inventory-list">
+          <div style="grid-column:span 3; text-align:center; color:#555; padding:20px; font-size:0.8rem;">Инвентарь пуст. Открывай кейсы!</div>
+        </div>
+      </div>
+    </main>
+
+    <div class="footer">@ ETO ROSTIK CS2 HUB // ALL SYSTEMS OPERATIONAL</div>
+  </div>
+
+  <!-- МОДАЛКА: КЕЙСЫ -->
+  <div class="modal-overlay" id="modal-case">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">КЕЙС CS2 ($100)</div>
+        <button class="modal-close" onclick="closeModal('modal-case')">&times;</button>
+      </div>
+      <div class="roulette-container">
+        <div class="roulette-marker"></div>
+        <div class="roulette-strip" id="roulette-strip"></div>
+      </div>
+      <button class="btn-action" style="width:100%; padding: 12px; font-size: 0.8rem;" id="spin-btn" onclick="spinCase()">КРУТИТЬ КЕЙС</button>
+      <div id="case-result" style="margin-top:10px; text-align:center; font-family:'Orbitron'; font-size:0.85rem;"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ТЕТРИС -->
+  <div class="modal-overlay" id="modal-tetris">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">ТЕТРИС — СЧЕТ: <span id="tetris-score">0</span></div>
+        <button class="modal-close" onclick="closeModal('modal-tetris')">&times;</button>
+      </div>
+      <div class="game-canvas-wrap">
+        <canvas class="game-canvas" id="tetris-canvas" width="200" height="360"></canvas>
+        <div class="dpad-grid">
+          <button class="dpad-btn" onclick="tetrisMove(-1)">◄</button>
+          <button class="dpad-btn" onclick="tetrisRotate()">↻</button>
+          <button class="dpad-btn" onclick="tetrisMove(1)">►</button>
+          <button class="dpad-btn" style="grid-column: span 3;" onclick="tetrisDrop()">▼ УСКОРИТЬ Падение ▼</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ЗМЕЙКА -->
+  <div class="modal-overlay" id="modal-snake">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">ЗМЕЙКА — СЧЕТ: <span id="snake-score">0</span></div>
+        <button class="modal-close" onclick="closeModal('modal-snake')">&times;</button>
+      </div>
+      <div class="game-canvas-wrap">
+        <canvas class="game-canvas" id="snake-canvas" width="260" height="260"></canvas>
+        <div style="display:grid; grid-template-columns:repeat(3,50px); gap:5px; margin-top:5px;">
+          <div></div><button class="dpad-btn" onclick="setSnakeDir('UP')">▲</button><div></div>
+          <button class="dpad-btn" onclick="setSnakeDir('LEFT')">◄</button>
+          <button class="dpad-btn" onclick="setSnakeDir('DOWN')">▼</button>
+          <button class="dpad-btn" onclick="setSnakeDir('RIGHT')">►</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: КАЛЬКУЛЯТОР -->
+  <div class="modal-overlay" id="modal-calc">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">ЭКОНОМИЧЕСКИЙ КАЛЬКУЛЯТОР</div>
+        <button class="modal-close" onclick="closeModal('modal-calc')">&times;</button>
+      </div>
+      <div class="calc-screen" id="calc-display">0</div>
+      <div class="calc-grid">
+        <button class="calc-btn op" onclick="calcInput('C')">C</button>
+        <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+        <button class="calc-btn op" onclick="calcInput('*')">×</button>
+        <button class="calc-btn op" onclick="calcInput('-')">-</button>
+        
+        <button class="calc-btn" onclick="calcInput('7')">7</button>
+        <button class="calc-btn" onclick="calcInput('8')">8</button>
+        <button class="calc-btn" onclick="calcInput('9')">9</button>
+        <button class="calc-btn op" onclick="calcInput('+')">+</button>
+
+        <button class="calc-btn" onclick="calcInput('4')">4</button>
+        <button class="calc-btn" onclick="calcInput('5')">5</button>
+        <button class="calc-btn" onclick="calcInput('6')">6</button>
+        <button class="calc-btn eq" style="grid-row: span 2;" onclick="calcInput('=')">=</button>
+
+        <button class="calc-btn" onclick="calcInput('1')">1</button>
+        <button class="calc-btn" onclick="calcInput('2')">2</button>
+        <button class="calc-btn" onclick="calcInput('3')">3</button>
+
+        <button class="calc-btn" style="grid-column: span 2;" onclick="calcInput('0')">0</button>
+        <button class="calc-btn" onclick="calcInput('.')">.</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ПРИЦЕЛ CS2 -->
+  <div class="modal-overlay" id="modal-crosshair">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">КАСТОМИЗАЦИЯ ПРИЦЕЛА</div>
+        <button class="modal-close" onclick="closeModal('modal-crosshair')">&times;</button>
+      </div>
+      <div class="crosshair-preview" id="ch-box">
+        <div id="ch-h" style="position:absolute; background:#00ff00;"></div>
+        <div id="ch-v" style="position:absolute; background:#00ff00;"></div>
+        <div id="ch-dot" style="position:absolute; background:#00ff00; border-radius:50%;"></div>
+      </div>
+      <div class="slider-group">
+        <label>Размер: <span id="ch-size-val">10</span>px</label>
+        <input type="range" id="ch-size" min="2" max="30" value="10" oninput="updateCrosshair()">
+      </div>
+      <div class="slider-group">
+        <label>Зазор (Gap): <span id="ch-gap-val">4</span>px</label>
+        <input type="range" id="ch-gap" min="-5" max="20" value="4" oninput="updateCrosshair()">
+      </div>
+      <div class="slider-group">
+        <label>Толщина: <span id="ch-thick-val">2</span>px</label>
+        <input type="range" id="ch-thick" min="1" max="8" value="2" oninput="updateCrosshair()">
+      </div>
+      <div class="slider-group">
+        <label>Цвет:</label>
+        <input type="color" id="ch-color" value="#00ff00" onchange="updateCrosshair()">
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ИИ ТАКТИК -->
+  <div class="modal-overlay" id="modal-ai">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">ИИ ТАКТИЧЕСКИЙ СОВЕТНИК</div>
+        <button class="modal-close" onclick="closeModal('modal-ai')">&times;</button>
+      </div>
+      <div id="ai-advice" style="font-size:0.85rem; line-height:1.4; color:#d0d7de; background:rgba(0,0,0,0.4); padding:12px; border-radius:8px; border:1px solid var(--border);">
+        Нажми кнопку ниже, чтобы сгенерировать тактику раунда!
+      </div>
+      <button class="btn-action" style="width:100%; margin-top:12px;" onclick="generateAiTactics()">СГЕНЕРИРОВАТЬ ТАКТИКУ</button>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: МОНИТОР -->
+  <div class="modal-overlay" id="modal-stats">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">МОНИТОР СИСТЕМЫ</div>
+        <button class="modal-close" onclick="closeModal('modal-stats')">&times;</button>
+      </div>
+      <div style="font-size:0.9rem; font-family:'Orbitron'; line-height:1.8;">
+        <div>FPS: <span id="fps-val" style="color:var(--cs-blue)">60</span></div>
+        <div>ПИНГ: <span id="ping-val" style="color:var(--cs-gold)">18</span> ms</div>
+        <div>СТАТУС СЕТИ: <span style="color:#00ff00">ОТЛИЧНО</span></div>
+        <div>ОПТИМИЗАЦИЯ: <span style="color:var(--cs-blue)">100% (VANILLA JS)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ПРОФИЛЬ -->
+  <div class="modal-overlay" id="modal-profile">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">ПРОФИЛЬ ИГРОКА</div>
+        <button class="modal-close" onclick="closeModal('modal-profile')">&times;</button>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:2.5rem; margin-bottom:5px;">👑</div>
+        <div style="font-family:'Orbitron'; font-size:1.1rem; color:var(--cs-gold);">ETO ROSTIK</div>
+        <div style="font-size:0.75rem; color:#8b949e; margin-top:4px;">ЗВАНИЕ: GLOBAL ELITE // FACEIT 10 LVL</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- ЗВУКОВОЙ ДВИЖОК (WEB AUDIO API) ---
+    let soundEnabled = true;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, duration, type = 'sine') {
+      if (!soundEnabled) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e){}
+    }
+    document.getElementById('sound-toggle').addEventListener('click', (e) => {
+      soundEnabled = !soundEnabled;
+      e.target.textContent = soundEnabled ? '🔊' : '🔇';
+      playSound(600, 0.08);
+    });
+
+    // --- УПРАВЛЕНИЕ ВКТАДКАМИ И МОДАЛКАМИ ---
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('pane-' + btn.dataset.tab).classList.add('active');
+        playSound(400, 0.05);
+      });
+    });
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); playSound(500, 0.05); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); playSound(300, 0.05); }
+
+    // --- БАЛАНС И ИНВЕНТАРЬ ---
+    let userBalance = 500;
+    let inventory = [];
+
+    function updateBalanceDisplay() {
+      document.getElementById('user-balance').textContent = userBalance;
+    }
+
+    function renderInventory() {
+      const container = document.getElementById('inventory-list');
+      if (inventory.length === 0) {
+        container.innerHTML = `<div style="grid-column:span 3; text-align:center; color:#555; padding:20px; font-size:0.8rem;">Инвентарь пуст. Открывай кейсы!</div>`;
+        return;
+      }
+      container.innerHTML = '';
+      inventory.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'inv-item';
+        div.style.borderColor = item.color;
+        div.innerHTML = `
+          <div style="font-size:1.2rem;">🔫</div>
+          <div class="inv-item-name" style="color:${item.color}">${item.name}</div>
+          <div class="inv-item-price">$${item.price}</div>
+          <button class="btn-sell" onclick="sellSkin(${index})">ПРОДАТЬ</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function sellSkin(index) {
+      userBalance += inventory[index].price;
+      inventory.splice(index, 1);
+      updateBalanceDisplay();
+      renderInventory();
+      playSound(800, 0.1);
+    }
+
+    function sellAllSkins() {
+      inventory.forEach(item => userBalance += item.price);
+      inventory = [];
+      updateBalanceDisplay();
+      renderInventory();
+      playSound(900, 0.15);
+    }
+
+    // --- CS2 КЕЙС СИМУЛЯТОР ---
+    const caseSkins = [
+      { name: 'P250 | Sand Dune', color: '#b0c3d9', price: 5, rarity: 0 },
+      { name: 'AK-47 | Safari Mesh', color: '#b0c3d9', price: 10, rarity: 0 },
+      { name: 'M4A4 | Evil Daimyo', color: '#4b69ff', price: 35, rarity: 1 },
+      { name: 'USP-S | Cyrex', color: '#8847ff', price: 80, rarity: 2 },
+      { name: 'AWP | Hyper Beast', color: '#d32ee6', price: 220, rarity: 3 },
+      { name: 'AK-47 | Fire Serpent', color: '#eb4b4b', price: 650, rarity: 4 },
+      { name: '★ Karambit | Doppler', color: '#e5a93c', price: 1500, rarity: 5 }
+    ];
+
+    function getRandomSkin() {
+      let rand = Math.random() * 100;
+      if (rand < 0.5) return caseSkins[6]; // Knife
+      if (rand < 3) return caseSkins[5];   // Covert
+      if (rand < 10) return caseSkins[4];  // Classified
+      if (rand < 25) return caseSkins[3];  // Restricted
+      if (rand < 55) return caseSkins[2];  // Mil-Spec
+      return caseSkins[Math.floor(Math.random() * 2)]; // Consumer
+    }
+
+    let isSpinning = false;
+    function spinCase() {
+      if (isSpinning) return;
+      if (userBalance < 100) {
+        alert('Недостаточно баланса! Продай скины в инвентаре.');
+        return;
+      }
+      userBalance -= 100;
+      updateBalanceDisplay();
+      isSpinning = true;
+
+      const strip = document.getElementById('roulette-strip');
+      const resDiv = document.getElementById('case-result');
+      resDiv.textContent = 'Крутим...';
+      strip.style.transition = 'none';
+      strip.style.left = '0px';
+
+      let items = [];
+      for (let i = 0; i < 40; i++) {
+        items.push(getRandomSkin());
+      }
+      const winningSkin = items[32]; // Фиксированный выигрышный скин
+
+      strip.innerHTML = '';
+      items.forEach(skin => {
+        let div = document.createElement('div');
+        div.className = 'skin-card-roll';
+        div.style.borderColor = skin.color;
+        div.innerHTML = `<div style="font-size:1.1rem">🎯</div><div style="color:${skin.color}; font-weight:bold; font-size:0.55rem; margin-top:2px;">${skin.name}</div>`;
+        strip.appendChild(div);
+      });
+
+      setTimeout(() => {
+        strip.style.transition = 'left 4s cubic-bezier(0.1, 0.85, 0.15, 1)';
+        let targetLeft = -(32 * 83 - 140);
+        strip.style.left = targetLeft + 'px';
+      }, 50);
+
+      let tickTimer = setInterval(() => playSound(300, 0.03), 150);
+
+      setTimeout(() => {
+        clearInterval(tickTimer);
+        isSpinning = false;
+        inventory.push(winningSkin);
+        renderInventory();
+        resDiv.innerHTML = `ВЫПАЛО: <span style="color:${winningSkin.color}">${winningSkin.name}</span> ($${winningSkin.price})`;
+        playSound(900, 0.3, 'square');
+      }, 4100);
+    }
+
+    // --- ТЕТРИС ---
+    const tCanvas = document.getElementById('tetris-canvas');
+    const tCtx = tCanvas.getContext('2d');
+    let tScore = 0;
+    let tBoard = Array(18).fill().map(() => Array(10).fill(0));
+    let tPiece = null;
+    let tTimer = null;
+
+    const SHAPES = [
+      [[1,1,1,1]],
+      [[1,1],[1,1]],
+      [[0,1,0],[1,1,1]],
+      [[1,0,0],[1,1,1]],
+      [[0,0,1],[1,1,1]]
+    ];
+    const COLORS = ['#00a2ff', '#e5a93c', '#8847ff', '#eb4b4b', '#00ff00'];
+
+    function initTetris() {
+      tBoard = Array(18).fill().map(() => Array(10).fill(0));
+      tScore = 0;
+      document.getElementById('tetris-score').textContent = '0';
+      spawnTetrisPiece();
+      if (tTimer) clearInterval(tTimer);
+      tTimer = setInterval(tetrisTick, 500);
+      drawTetris();
+    }
+
+    function spawnTetrisPiece() {
+      let id = Math.floor(Math.random() * SHAPES.length);
+      tPiece = { shape: SHAPES[id], color: COLORS[id], x: 3, y: 0 };
+    }
+
+    function tetrisTick() {
+      if (!tPiece) return;
+      if (!canMoveTetris(tPiece.x, tPiece.y + 1, tPiece.shape)) {
+        // Lock piece
+        tPiece.shape.forEach((row, r) => {
+          row.forEach((v, c) => {
+            if (v) tBoard[tPiece.y + r][tPiece.x + c] = tPiece.color;
+          });
+        });
+        clearTetrisLines();
+        spawnTetrisPiece();
+        if (!canMoveTetris(tPiece.x, tPiece.y, tPiece.shape)) {
+          alert('GAME OVER! Ваш счет: ' + tScore);
+          initTetris();
+        }
+      } else {
+        tPiece.y++;
+      }
+      drawTetris();
+    }
+
+    function canMoveTetris(nx, ny, shape) {
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (shape[r][c]) {
+            let x = nx + c, y = ny + r;
+            if (x < 0 || x >= 10 || y >= 18) return false;
+            if (y >= 0 && tBoard[y][x]) return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function clearTetrisLines() {
+      for (let r = 17; r >= 0; r--) {
+        if (tBoard[r].every(cell => cell !== 0)) {
+          tBoard.splice(r, 1);
+          tBoard.unshift(Array(10).fill(0));
+          tScore += 100;
+          document.getElementById('tetris-score').textContent = tScore;
+          playSound(700, 0.15);
+          r++;
+        }
+      }
+    }
+
+    function drawTetris() {
+      tCtx.fillStyle = '#000';
+      tCtx.fillRect(0, 0, 200, 360);
+      // Board
+      for (let r = 0; r < 18; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (tBoard[r][c]) {
+            tCtx.fillStyle = tBoard[r][c];
+            tCtx.fillRect(c * 20, r * 20, 19, 19);
+          }
+        }
+      }
+      // Current Piece
+      if (tPiece) {
+        tCtx.fillStyle = tPiece.color;
+        tPiece.shape.forEach((row, r) => {
+          row.forEach((v, c) => {
+            if (v) tCtx.fillRect((tPiece.x + c) * 20, (tPiece.y + r) * 20, 19, 19);
+          });
+        });
+      }
+    }
+
+    function tetrisMove(dir) {
+      if (canMoveTetris(tPiece.x + dir, tPiece.y, tPiece.shape)) {
+        tPiece.x += dir;
+        drawTetris();
+        playSound(400, 0.03);
+      }
+    }
+    function tetrisRotate() {
+      let rotated = tPiece.shape[0].map((_, i) => tPiece.shape.map(row => row[i]).reverse());
+      if (canMoveTetris(tPiece.x, tPiece.y, rotated)) {
+        tPiece.shape = rotated;
+        drawTetris();
+        playSound(500, 0.03);
+      }
+    }
+    function tetrisDrop() { tetrisTick(); playSound(300, 0.03); }
+
+    // --- ЗМЕЙКА ---
+    const sCanvas = document.getElementById('snake-canvas');
+    const sCtx = sCanvas.getContext('2d');
+    let snake = [], sFood = {x:0, y:0}, sDir = 'RIGHT', sScore = 0, sTimer = null;
+
+    function initSnake() {
+      snake = [{x: 5, y: 5}, {x: 4, y: 5}];
+      sDir = 'RIGHT';
+      sScore = 0;
+      document.getElementById('snake-score').textContent = '0';
+      spawnSnakeFood();
+      if (sTimer) clearInterval(sTimer);
+      sTimer = setInterval(snakeTick, 150);
+      drawSnake();
+    }
+
+    function spawnSnakeFood() {
+      sFood = { x: Math.floor(Math.random() * 13), y: Math.floor(Math.random() * 13) };
+    }
+
+    function setSnakeDir(dir) {
+      if (dir === 'LEFT' && sDir !== 'RIGHT') sDir = 'LEFT';
+      if (dir === 'RIGHT' && sDir !== 'LEFT') sDir = 'RIGHT';
+      if (dir === 'UP' && sDir !== 'DOWN') sDir = 'UP';
+      if (dir === 'DOWN' && sDir !== 'UP') sDir = 'DOWN';
+    }
+
+    function snakeTick() {
+      let head = { ...snake[0] };
+      if (sDir === 'LEFT') head.x--;
+      if (sDir === 'RIGHT') head.x++;
+      if (sDir === 'UP') head.y--;
+      if (sDir === 'DOWN') head.y++;
+
+      if (head.x < 0 || head.x >= 13 || head.y < 0 || head.y >= 13 || snake.some(s => s.x === head.x && s.y === head.y)) {
+        alert('Змейка разбилась! Счет: ' + sScore);
+        initSnake();
+        return;
+      }
+
+      snake.unshift(head);
+      if (head.x === sFood.x && head.y === sFood.y) {
+        sScore += 10;
+        document.getElementById('snake-score').textContent = sScore;
+        playSound(800, 0.1);
+        spawnSnakeFood();
+      } else {
+        snake.pop();
+      }
+      drawSnake();
+    }
+
+    function drawSnake() {
+      sCtx.fillStyle = '#000';
+      sCtx.fillRect(0, 0, 260, 260);
+      // Food
+      sCtx.fillStyle = '#eb4b4b';
+      sCtx.fillRect(sFood.x * 20, sFood.y * 20, 18, 18);
+      // Snake
+      sCtx.fillStyle = '#00a2ff';
+      snake.forEach((seg, i) => {
+        sCtx.fillStyle = i === 0 ? '#e5a93c' : '#00a2ff';
+        sCtx.fillRect(seg.x * 20, seg.y * 20, 18, 18);
+      });
+    }
+
+    // --- КАЛЬКУЛЯТОР ---
+    let calcExpr = '';
+    function calcInput(val) {
+      const disp = document.getElementById('calc-display');
+      playSound(500, 0.03);
+      if (val === 'C') { calcExpr = ''; disp.textContent = '0'; return; }
+      if (val === '=') {
+        try {
+          calcExpr = eval(calcExpr).toString();
+          disp.textContent = calcExpr;
+        } catch(e) { disp.textContent = 'ОШИБКА'; calcExpr = ''; }
+        return;
+      }
+      calcExpr += val;
+      disp.textContent = calcExpr;
+    }
+
+    // --- ПРИЦЕЛ CS2 ---
+    function updateCrosshair() {
+      let sz = document.getElementById('ch-size').value;
+      let gap = document.getElementById('ch-gap').value;
+      let th = document.getElementById('ch-thick').value;
+      let col = document.getElementById('ch-color').value;
+
+      document.getElementById('ch-size-val').textContent = sz;
+      document.getElementById('ch-gap-val').textContent = gap;
+      document.getElementById('ch-thick-val').textContent = th;
+
+      let h = document.getElementById('ch-h');
+      let v = document.getElementById('ch-v');
+
+      h.style.background = col; v.style.background = col;
+      h.style.height = th + 'px'; h.style.width = (sz * 2) + 'px';
+      v.style.width = th + 'px'; v.style.height = (sz * 2) + 'px';
+    }
+    updateCrosshair();
+
+    // --- ИИ ТАКТИК ---
+    const tactics = [
+      "Рaунд на Mirage: 3 человека дают сплит B через каты и эпс, 2 зажимают A с ямы под фаст-смоки.",
+      "Eco-раунд на Inferno: Покупаем 5 Desert Eagle, встаем в упор на банане и ждем агрессию CT.",
+      "Dust2: Смочим мид, 4 человека бегут в B-упор под флешки, один контролирует длинный со скаутом.",
+      "Nuke: Быстрая вентиляция через улицу под глубокую дымовую завесу."
+    ];
+    function generateAiTactics() {
+      let res = tactics[Math.floor(Math.random() * tactics.length)];
+      document.getElementById('ai-advice').textContent = res;
+      playSound(650, 0.08);
+    }
+
+    // --- 3D МОДЕЛЬ (THREE.JS) ---
+    const c3d = document.getElementById('weapon-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas: c3d, alpha: true, antialias: true });
+    renderer.setSize(c3d.clientWidth, c3d.clientHeight);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, c3d.clientWidth / c3d.clientHeight, 0.1, 1000);
+    camera.position.z = 4.5;
+
+    const ambLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambLight);
+    const dirLight = new THREE.DirectionalLight(0x00a2ff, 2);
+    dirLight.position.set(2, 2, 4);
+    scene.add(dirLight);
+
+    const gunGroup = new THREE.Group();
+    const gunMat = new THREE.MeshStandardMaterial({ color: 0x18202a, roughness: 0.3, metalness: 0.8 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xe5a93c, roughness: 0.2, metalness: 0.9 });
+
+    // USP-S Body
+    const bodyGeo = new THREE.BoxGeometry(1.8, 0.5, 0.25);
+    const bodyMesh = new THREE.Mesh(bodyGeo, gunMat);
+    gunGroup.add(bodyMesh);
+
+    // Suppressor (Глушитель)
+    const supGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.4, 16);
+    const supMesh = new THREE.Mesh(supGeo, goldMat);
+    supMesh.rotation.z = Math.PI / 2;
+    supMesh.position.set(1.5, 0.05, 0);
+    gunGroup.add(supMesh);
+
+    // Handle (Рукоятка)
+    const handleGeo = new THREE.BoxGeometry(0.5, 1.0, 0.22);
+    const handleMesh = new THREE.Mesh(handleGeo, gunMat);
+    handleMesh.position.set(-0.5, -0.6, 0);
+    handleMesh.rotation.z = -0.25;
+    gunGroup.add(handleMesh);
+
+    scene.add(gunGroup);
+
+    let isDrag = false, pX = 0;
+    c3d.addEventListener('mousedown', e => { isDrag = true; pX = e.clientX; });
+    window.addEventListener('mouseup', () => isDrag = false);
+    c3d.addEventListener('mousemove', e => {
+      if (!isDrag) return;
+      gunGroup.rotation.y += (e.clientX - pX) * 0.01;
+      pX = e.clientX;
+    });
+
+    c3d.addEventListener('touchstart', e => { isDrag = true; pX = e.touches[0].clientX; });
+    window.addEventListener('touchend', () => isDrag = false);
+    c3d.addEventListener('touchmove', e => {
+      if (!isDrag) return;
+      gunGroup.rotation.y += (e.touches[0].clientX - pX) * 0.01;
+      pX = e.touches[0].clientX;
+    });
+
+    function animate3D() {
+      requestAnimationFrame(animate3D);
+      if (!isDrag) gunGroup.rotation.y += 0.005;
+      renderer.render(scene, camera);
+    }
+    animate3D();
+
+    // FPS Counter
+    let lastT = performance.now(), frames = 0;
+    function updateFPS() {
+      frames++;
+      let now = performance.now();
+      if (now - lastT >= 1000) {
+        document.getElementById('fps-val').textContent = frames;
+        frames = 0; lastT = now;
+      }
+      requestAnimationFrame(updateFPS);
+    }
+    updateFPS();
+  </script>
+</body>
+    </html>
