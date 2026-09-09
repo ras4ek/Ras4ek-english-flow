@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.ras4ek.englishflow",
+        "sha256_cert_fingerprints": ["2C:65:1F:29:E8:42:70:2C:F2:0C:CF:69:9C:70:39:EB:6D:DB:EF:17:BC:5D:F7:AB:59:6E:6B:40:57:FA:A6:63"]
+      }
+    }]
