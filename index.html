@@ -4767,7 +4767,33 @@ window.EFVoice=(function(){
       if(p.length>90){p.split(/(?<=,)\s+/).forEach(x=>x.trim()&&out.push(x.trim()))}else out.push(p)});
     return out;
   }
+  let nat=null,natLoading=null,natCtx=null,natSrc=null,natCfg={voice:'af_heart',speed:1};
+  const eng=()=>{try{return Storage.get('ef_voice_engine','device')||'device'}catch(e){return 'device'}};
+  async function loadNatural(cb){
+    if(nat) return nat; if(natLoading) return natLoading;
+    natLoading=(async()=>{ try{
+      const mod=await import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm');
+      nat=await mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX',{dtype:'q8',device:'wasm',progress_callback:p=>{ if(cb) cb(p) }});
+      return nat }catch(e){ natLoading=null; throw e } })();
+    return natLoading;
+  }
+  function playRaw(a){ return new Promise(res=>{ try{
+    natCtx=natCtx||new (window.AudioContext||window.webkitAudioContext)(); if(natCtx.state==='suspended') natCtx.resume();
+    const d=a.audio, buf=natCtx.createBuffer(1,d.length,a.sampling_rate||24000); buf.copyToChannel(d,0);
+    const src=natCtx.createBufferSource(); src.buffer=buf; src.connect(natCtx.destination); natSrc=src; src.onended=()=>res(); src.start();
+  }catch(e){res()} }) }
+  async function natSpeak(text,opts){
+    const my=++token; try{syn&&syn.cancel()}catch(e){} try{natSrc&&natSrc.stop()}catch(e){}
+    const parts=split(text); if(!parts.length) return; const speed=(opts&&opts.rate)||natCfg.speed;
+    const gen=async t=>{ try{ return await nat.generate(t,{voice:natCfg.voice,speed}) }catch(e){ return await nat.generate(t,{voice:'af_heart',speed}) } };
+    let next=gen(parts[0]);
+    for(let i=0;i<parts.length;i++){ if(my!==token) return; const a=await next; if(i+1<parts.length) next=gen(parts[i+1]); if(my!==token) return; await playRaw(a); await new Promise(r=>setTimeout(r,120)) }
+  }
   function speakAsync(text,lang,opts){
+    if(lang!=='ru'&&nat&&eng()==='natural') return natSpeak(text,opts).catch(()=>devSpeakAsync(text,lang,opts));
+    return devSpeakAsync(text,lang,opts);
+  }
+  function devSpeakAsync(text,lang,opts){
     return new Promise(res=>{
       if(!syn){res();return}
       const my=++token; try{syn.resume()}catch(e){} try{syn.cancel()}catch(e){}
@@ -4788,9 +4814,9 @@ window.EFVoice=(function(){
     });
   }
   function speak(text,lang,opts){speakAsync(text,lang,opts)}
-  function stop(){token++;try{syn&&syn.cancel()}catch(e){}}
+  function stop(){token++;try{syn&&syn.cancel()}catch(e){} try{natSrc&&natSrc.stop()}catch(e){}}
   if(syn){load(); try{syn.addEventListener('voiceschanged',load)}catch(e){}}
-  return{speak,speakAsync,stop,pick,score,split,all:()=>{load();return voices.filter(isEn).sort((a,b)=>score(b,'en-US')-score(a,'en-US'))}};
+  return{speak,speakAsync,stop,pick,score,split,loadNatural,isNatural:()=>!!nat,setNat:o=>Object.assign(natCfg,o),engine:eng,all:()=>{load();return voices.filter(isEn).sort((a,b)=>score(b,'en-US')-score(a,'en-US'))}};
 })();
 /* settings: nicer voice list + accent + test button */
 window.populateVoices=function(){
@@ -5184,15 +5210,18 @@ body.tu-on #up{display:none!important}
 /* ===== EFChat: free-form AI tutor (Gemini via user's own key) + offline lookup ===== */
 /* Owner config: URL of your own AI proxy (see ai-proxy-worker.js). Leave empty to use free public sources. */
 window.EF_AI_PROXY=window.EF_AI_PROXY||'';
+/* Optional: a Gemini key restricted to your site's domain in Google Cloud (Website restrictions). Leave empty to use free public sources. */
+window.EF_GEMINI_KEY=window.EF_GEMINI_KEY||'';
 window.EFChat=(function(){
   const KEY='ef_ai_key', MODELS=['gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite'];
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const LAB={idle:'Готов',listening:'Слушаю…',thinking:'Думаю…',speaking:'Говорю…'};
   const CHIPS=['Давай поговорим по-английски','Как сказать «я опаздываю»?','Исправь: I goed to school yesterday','Объясни Present Perfect просто','IELTS Speaking Part 1: задай вопрос'];
-  let msgs=[],state='idle',lang='en-US',voiceOn=true,model=null,rec=null,busy=false,tab='chat',setup=false,spTok=0,explain='en';
+  let msgs=[],state='idle',lang='en-US',voiceOn=true,model=null,rec=null,busy=false,tab='chat',setup=false,spTok=0,explain='en',callOn=false,callFail=0,callT0=0,callTimer=0,ex=null,holdAt=0,spaceDown=false;
+  let persona='angry',kind='flow'; try{persona=Storage.get('ef_ai_mood','angry')||'angry'; kind=Storage.get('ef_ai_kind','flow')||'flow'}catch(e){} if(!['angry','normal','kind'].includes(persona)) persona='angry'; if(!['flow','fox','owl'].includes(kind)) kind='flow';
   const $=id=>document.getElementById(id);
   const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const getKey=()=>{try{return Storage.get(KEY,'')||''}catch(e){return ''}};
+  const getKey=()=>{let k=''; try{k=Storage.get(KEY,'')||''}catch(e){} return k||window.EF_GEMINI_KEY||''};
   const setKey=k=>{try{Storage.set(KEY,k)}catch(e){}};
   const level=()=>{try{const h=Storage.get('ef_place_hist',[]);const m=h&&h[0]&&String(h[0].name).match(/^(Pre-A1|[ABC][12])/);return m?m[1]:'A2'}catch(e){return 'A2'}};
   const MIC='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
@@ -5202,7 +5231,7 @@ window.EFChat=(function(){
   const siteMap=()=>[...document.querySelectorAll('.nav-links .nav-link')].map(b=>b.dataset.view).filter(Boolean).map(v=>v+' = '+navLabel(v)+(DESC[v]?' ('+DESC[v]+')':'')).join('; ');
   const SYS=()=>'You are Flow, the AI tutor inside EnglishFlow, a free website for learning English from zero to C1 for Russian speakers. '
     +'You are an AI assistant. If asked what model you are, say you are an AI language model working through a free service and you do not know the exact model. Never claim to be human or an official examiner. '
-    +'Student level: '+level()+'. '+(explain==='ru'?'Explain grammar and word meanings in Russian, with English examples. ':'Use simple English suited to the level; add a short Russian hint only when it really helps. ')
+    +'Student level: '+level()+'. '+(PERS[persona]||'')+' '+(explain==='ru'?'Explain grammar and word meanings in Russian, with English examples. ':'Use simple English suited to the level; add a short Russian hint only when it really helps. ')
     +'If the student writes in Russian, answer in Russian and give the English phrases. Never mix two languages inside one sentence. '
     +'If the student\'s English has a mistake, answer the content first, then add one short line: "Исправление: <corrected sentence> — <reason in Russian>". '
     +'If asked how to say something, give 1-3 natural options with brief Russian notes. '
@@ -5211,7 +5240,7 @@ window.EFChat=(function(){
     +'You know the whole EnglishFlow site and can explain how to use any section and recommend the right one. Sections (id = name): '+siteMap()+'. '
     +'To suggest a section, write [[open:id]] on its own line, for example [[open:grammar]]. Only use ids from this list. For IELTS give learning feedback only and never official band scores.';
   function setState(s){
-    state=s; const o=$('aiOrb'); if(o) o.className='ai-orb '+s; const t=$('aiSt'); if(t) t.textContent=LAB[s];
+    state=s; const o=$('aiOrb'); if(o) o.className='ai-orb '+s+' m-'+persona+' k-'+kind; const t=$('aiSt'); if(t) t.textContent=LAB[s];
     const log=$('aiLog'); if(!log) return; const d=$('aiTyping');
     if(s==='thinking'&&!d){const x=document.createElement('div'); x.id='aiTyping'; x.className='ai-b ai ai-dots'; x.innerHTML='<i></i><i></i><i></i>'; log.appendChild(x); x.scrollIntoView({block:'nearest',behavior:'smooth'})}
     if(s!=='thinking'&&d) d.remove();
@@ -5240,13 +5269,13 @@ window.EFChat=(function(){
     const c=$('aiChips'); if(c) c.style.display='none';
   }
   function stopSp(){spTok++; try{EFVoice.stop()}catch(e){}}
-  async function speak(text){
+  async function speak(text,cb){
     const my=++spTok; const lines=ttsText(text).split(/\n+/).map(l=>l.trim()).filter(Boolean);
     setState('speaking');
     const segs=[]; lines.forEach(l=>{ const runs=l.match(/[А-Яа-яЁё][^A-Za-z]*|[A-Za-z][^А-Яа-яЁё]*/g)||[l];
       runs.forEach(t=>{ const cyr=/[А-Яа-яЁё]/.test(t), ru=cyr||t.trim().split(/\s+/).filter(Boolean).length<=2&&runs.length>1; const z=segs[segs.length-1]; if(z&&z.ru===ru&&z.line===l) z.t+=t; else segs.push({t,ru,line:l}) }) });
     for(const g of segs){ if(my!==spTok) return; if(!/[A-Za-zА-Яа-яЁё0-9]/.test(g.t)) continue; try{await EFVoice.speakAsync(g.t.trim(),g.ru?'ru':'en')}catch(e){} }
-    if(my===spTok&&state==='speaking') setState('idle');
+    if(my===spTok){ if(state==='speaking') setState('idle'); if(cb) cb(); else if(callOn) setTimeout(()=>{ if(callOn&&state==='idle'&&!busy) listen() },450) }
   }
   const getProv=()=>{try{const p=Storage.get('ef_ai_prov','')||''; return p||(getKey()?'gemini':'auto')}catch(e){return 'auto'}};
   const setProv=p=>{try{Storage.set('ef_ai_prov',p)}catch(e){}};
@@ -5292,12 +5321,20 @@ window.EFChat=(function(){
     }catch(e){ if(e&&e.code) throw e; throw {code:'net'} } finally{ clearTimeout(to) }
   }
   async function callPoll(list,sys){
-    const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),20000);
-    try{
-      const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,body:JSON.stringify({model:'openai',max_tokens:500,messages:[{role:'system',content:sys}].concat(list.map(x=>({role:x.role,content:x.text})))})});
-      if(!r.ok) throw {code:r.status===429?429:'poll'};
-      const j=await r.json(); const t=(((j.choices||[])[0]||{}).message||{}).content; if(!t) throw {code:'empty'}; return String(t).trim();
-    }catch(e){ if(e&&e.code) throw e; throw {code:'net'} } finally{ clearTimeout(to) }
+    let last=null;
+    for(let a=0;a<3;a++){
+      if(a) await new Promise(r=>setTimeout(r,a===1?4000:9000));
+      const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),20000);
+      try{
+        const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,body:JSON.stringify({model:'openai',max_tokens:500,messages:[{role:'system',content:sys}].concat(list.slice(-8).map(x=>({role:x.role,content:x.text})))})});
+        if(!r.ok){ last={code:r.status===429?429:'poll',http:r.status}; if([401,402,403].includes(r.status)) throw last; continue }
+        const raw=await r.text(); let j=null; try{j=JSON.parse(raw)}catch(e){}
+        const t=j?(((j.choices||[])[0]||{}).message||{}).content:(raw&&raw[0]!=='{'?raw:'');
+        if(!t){ last={code:'empty'}; continue } return String(t).trim();
+      }catch(e){ if(e&&e.http&&[401,402,403].includes(e.http)) throw e; if(!(e&&e.code)) last={code:'net'} }
+      finally{ clearTimeout(to) }
+    }
+    throw last||{code:'net'};
   }
   async function ask(list,sys,opt){
     const p=getProv(); const fn={puter:callPuter,poll:callPoll,gemini:callGemini,proxy:callProxy}, px=window.EF_AI_PROXY?['proxy']:[];
@@ -5313,8 +5350,7 @@ window.EFChat=(function(){
     if(c==='puter-limit') return 'Бесплатный месячный лимит Puter закончился. Выбери «Без регистрации» или свой ключ Gemini.';
     if(c==='net') return 'Нет связи с сервисом ИИ. Проверь интернет или VPN. Если ошибка повторяется, выбери другой источник.';
     if((c===400||c===403)&&/key|api/i.test(m)) return 'Ключ не подходит. Проверь его в настройке ИИ.';
-    if(c===429) return 'Слишком много запросов у бесплатного сервиса. Подожди минуту или выбери другой источник.';
-    if(c==='poll') return 'Бесплатный сервис сейчас недоступен. Нажми «ИИ: авто» внизу и выбери Puter или свой ключ.';
+    if(c==='poll'||c===429) return 'Бесплатный сервис ИИ сейчас занят или недоступен'+(e&&e.http?' (код '+e.http+')':'')+'. Подожди минуту или подключи Puter кнопкой ниже.';
     if(c===404) return 'Модель недоступна. Выбери другой источник ИИ.';
     if(c==='empty') return 'ИИ не вернул ответ. Попробуй переформулировать.';
     return 'Ошибка ИИ'+(c?' ('+c+')':'')+'. Попробуй ещё раз или выбери другой источник.';
@@ -5326,14 +5362,14 @@ window.EFChat=(function(){
     return out.map(w=>'**'+w.word+'** '+(w.trans||'')+' — '+w.ru+(w.ex?'\nПример: '+w.ex:'')).join('\n\n');
   }
   async function send(text){
-    text=String(text||'').trim(); if(!text||busy) return; stopSp(); busy=true; addMsg('me',text); setState('thinking'); let reply=null;
+    text=String(text||'').trim(); if(!text||busy) return; if(ex){ stopSp(); if(!ex.long) addMsg('me',text); examAnswer(text); return } stopSp(); busy=true; addMsg('me',text); setState('thinking'); let reply=null;
     try{
       if(getProv()){
         const list=msgs.filter(x=>x.r!=='err').slice(-12).map(x=>({role:x.r==='ai'?'assistant':'user',text:x.t}));
         reply=await ask(list,SYS());
       } else { await new Promise(r=>setTimeout(r,500)); reply=local(text)||'Подключи ИИ кнопкой «Подключить ИИ», чтобы мы могли разговаривать.' }
       setState('idle'); addMsg('ai',reply); if(voiceOn) speak(reply);
-    }catch(e){ setState('idle'); addMsg('err',friendly(e)) }
+    }catch(e){ setState('idle'); addMsg('err',friendly(e)); const c=e&&e.code; if((c==='poll'||c===429||c==='net')&&getProv()!=='puter'){ const log=$('aiLog'), last=log&&log.lastElementChild; if(last){ const b=document.createElement('button'); b.className='ai-go'; b.textContent='Подключить Puter (бесплатный вход)'; b.onclick=()=>quickPuter(b); last.appendChild(b) } } }
     busy=false; const i=$('aiIn'); if(i) i.focus({preventScroll:true});
   }
   const micMsg=c=>({'not-allowed':'Нет доступа к микрофону. Нажми на значок замка в адресной строке, затем «Разрешения», «Микрофон», «Разрешить». Можно также диктовать клавиатурой: значок микрофона на клавиатуре Gboard.','service-not-allowed':'Браузер не разрешил распознавание речи. Проверь разрешение для микрофона или диктуй клавиатурой (значок микрофона на Gboard).','no-speech':'Я не услышал речь. Нажми на микрофон и говори сразу после того, как шар станет красным. Проверь, что выбран нужный язык: English или Русский.','audio-capture':'Микрофон не найден или занят другим приложением. Закрой другие приложения с записью звука.','network':'Распознавание речи в Chrome работает через интернет. Проверь подключение.','language-not-supported':'Для этого языка нет распознавания в твоём браузере. Переключи язык кнопкой English / Русский.','aborted':''}[c]||'Не удалось распознать речь ('+(c||'ошибка')+'). Попробуй ещё раз или диктуй клавиатурой.');
@@ -5343,17 +5379,22 @@ window.EFChat=(function(){
     if(busy) return; stopSp(); try{rec&&rec.abort&&rec.abort()}catch(e){}
     rec=new SR(); rec.lang=lang; rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=1;
     let got=false; const me=rec;
-    setTimeout(()=>{ if(state==='listening'&&rec===me){ try{me.stop()}catch(e){} setState('idle'); if(!got) addMsg('err',micMsg('no-speech')) } },12000);
+    setTimeout(()=>{ if(state==='listening'&&rec===me){ try{me.stop()}catch(e){} setState('idle'); if(!got) noSpeech('no-speech') } },12000);
     rec.onresult=e=>{
       let fin='',inter=''; for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) fin+=r[0].transcript; else inter+=r[0].transcript}
       const inp=$('aiIn'); if(inter&&inp) inp.value=inter;
-      if(fin){ got=true; if(inp) inp.value=''; setState('idle'); send(fin) }
+      if(fin){ got=true; callFail=0; if(inp) inp.value=''; setState('idle'); send(fin) }
     };
-    rec.onerror=e=>{ got=true; setState('idle'); const m=micMsg(e&&e.error); if(m) addMsg('err',m) };
-    rec.onend=()=>{ if(state==='listening'){ setState('idle'); if(!got) addMsg('err',micMsg('no-speech')) } };
+    rec.onerror=e=>{ got=true; setState('idle'); noSpeech(e&&e.error) };
+    rec.onend=()=>{ if(state==='listening'){ setState('idle'); if(!got) noSpeech('no-speech') } };
     try{rec.start(); setState('listening')}catch(e){setState('idle'); addMsg('err',micMsg('audio-capture'))}
   }
   const OKQ=[{role:'user',text:'Reply with the single word OK'}];
+  async function quickPuter(btn){
+    btn.disabled=true; btn.textContent='Открываю вход…';
+    try{ await ask(OKQ,'You are a test.',{only:'puter'}); setProv('puter'); btn.remove(); addMsg('err','Puter подключён. Напиши сообщение ещё раз.') }
+    catch(e){ btn.disabled=false; btn.textContent='Подключить Puter (бесплатный вход)'; addMsg('err',friendly(e)) }
+  }
   async function choose(p){
     const st=$('aiKeySt');
     if(p==='auto'){ setProv('auto'); setup=false; renderChat(); return }
@@ -5385,20 +5426,178 @@ window.EFChat=(function(){
     try{const st=Storage.getSettings(); st.voiceName=nm; Storage.setSettings(st)}catch(e){}
     const b=$('aiVP'); if(b) b.textContent=vpLabel(); stopSp(); EFVoice.speak('Hello! This is how I sound. Nice to meet you.');
   }
+  const MASCOTS={
+  flow:u=>`<svg viewBox="0 0 200 190" aria-hidden="true"><defs><linearGradient id="fh${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d5deee"/></linearGradient><linearGradient id="fs${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#243247"/><stop offset="1" stop-color="#0a101c"/></linearGradient></defs>
+  <ellipse cx="100" cy="184" rx="58" ry="5" fill="#000" opacity=".14"/>
+  <g class="mbody"><path d="M44 186c0-28 24-42 56-42s56 14 56 42z" fill="url(#fh${u})" stroke="currentColor" stroke-width="5"/><rect x="80" y="150" width="40" height="9" rx="4.5" fill="currentColor"/><circle cx="100" cy="172" r="5" fill="currentColor" opacity=".8"/></g>
+  <g class="mhead"><line x1="100" y1="22" x2="100" y2="42" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle class="mbulb" cx="100" cy="16" r="8" fill="currentColor"/><circle cx="97" cy="13" r="2.5" fill="#fff" opacity=".85"/>
+  <rect class="mear" x="20" y="76" width="17" height="40" rx="8.5" fill="currentColor"/><rect class="mear" x="163" y="76" width="17" height="40" rx="8.5" fill="currentColor"/>
+  <rect x="31" y="40" width="138" height="108" rx="40" fill="url(#fh${u})" stroke="currentColor" stroke-width="5"/>
+  <rect x="46" y="54" width="108" height="80" rx="30" fill="url(#fs${u})"/><path d="M56 63q44-13 88 0" stroke="#fff" stroke-opacity=".13" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <g class="mn"><g class="meyes"><ellipse class="geye" cx="76" cy="92" rx="9.5" ry="13"/><ellipse class="geye" cx="124" cy="92" rx="9.5" ry="13"/></g><path class="gline mmouth" d="M88 118q12 9 24 0"/></g>
+  <g class="ma"><g class="meyes"><path class="geye" d="M60 78l30 11v16l-30-6z"/><path class="geye" d="M140 78l-30 11v16l30-6z"/></g><path class="gline mmouth" d="M84 120l4-5 6 5 6-5 6 5 6-5 6 5 4-5"/></g>
+  <g class="mk"><g class="meyes"><path class="gline" d="M64 98q12-20 24 0"/><path class="gline" d="M112 98q12-20 24 0"/></g><path class="gline mmouth" d="M84 112q16 18 32 0"/><circle cx="62" cy="116" r="6" fill="#fb7185" opacity=".6"/><circle cx="138" cy="116" r="6" fill="#fb7185" opacity=".6"/></g>
+  <rect class="mtalk geye" x="90" y="112" width="20" height="12" rx="6"/></g>
+  <g class="ma msteam"><circle cx="16" cy="62" r="7"/><circle cx="8" cy="46" r="5"/><circle cx="184" cy="62" r="7"/><circle cx="192" cy="46" r="5"/></g>
+  <g class="mk mspark"><path d="M22 36l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/><path d="M178 30l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z"/></g>
+  <g class="mdots"><circle cx="150" cy="30" r="4"/><circle cx="164" cy="20" r="5"/><circle cx="180" cy="8" r="6"/></g>
+  <g class="mwaves"><path d="M8 80q-8 16 0 32"/><path d="M0 72q-14 24 0 48"/><path d="M192 80q8 16 0 32"/><path d="M200 72q14 24 0 48"/></g></svg>`,
+  fox:u=>`<svg viewBox="0 0 200 190" aria-hidden="true"><defs><linearGradient id="xo${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset="1" stop-color="#ea580c"/></linearGradient></defs>
+  <ellipse cx="100" cy="184" rx="58" ry="5" fill="#000" opacity=".14"/>
+  <g class="mbody"><path d="M40 187c0-30 26-44 60-44s60 14 60 44z" fill="#475569"/><path d="M84 146q16 14 32 0l-6 38h-20z" fill="#fff"/><path d="M58 146q42 22 84 0v15q-42 22-84 0z" fill="currentColor"/></g>
+  <g class="mhead"><path d="M44 74L36 14 86 46z" fill="url(#xo${u})"/><path d="M52 64L47 30 74 48z" fill="#7c2d12"/><path d="M156 74L164 14 114 46z" fill="url(#xo${u})"/><path d="M148 64L153 30 126 48z" fill="#7c2d12"/>
+  <path d="M34 96c0-32 30-56 66-56s66 24 66 56c0 22-14 40-30 50-11 6-23 9-36 9s-25-3-36-9c-16-10-30-28-30-50z" fill="url(#xo${u})"/>
+  <path d="M100 100c-10 0-22 10-32 20-8 8-22 12-32 6 2 14 14 24 30 30 10 6 22 9 34 9s24-3 34-9c16-6 28-16 30-30-10 6-24 2-32-6-10-10-22-20-32-20z" fill="#fff7ed"/>
+  <ellipse cx="74" cy="92" rx="13" ry="14" fill="#fff"/><ellipse cx="126" cy="92" rx="13" ry="14" fill="#fff"/>
+  <g class="mn"><g class="meyes"><circle cx="75" cy="93" r="7" fill="#1f2937"/><circle cx="125" cy="93" r="7" fill="#1f2937"/><circle cx="77" cy="90" r="2.4" fill="#fff"/><circle cx="127" cy="90" r="2.4" fill="#fff"/></g><path class="dline mmouth" d="M88 130q12 9 24 0"/><path class="dline" d="M58 78q16-8 32 0M110 78q16-8 32 0" /></g>
+  <g class="ma"><g class="meyes"><circle cx="78" cy="96" r="6" fill="#1f2937"/><circle cx="122" cy="96" r="6" fill="#1f2937"/></g><path d="M60 76l32 12M140 76l-32 12" stroke="#1f2937" stroke-width="7" stroke-linecap="round"/><path class="dline mmouth" d="M86 134q14-10 28 0"/><path d="M95 131l3 8 3-8z" fill="#fff" stroke="#1f2937" stroke-width="1.5"/></g>
+  <g class="mk"><g class="meyes"><path class="dline" d="M63 96q12-16 24 0M113 96q12-16 24 0"/></g><path d="M86 126q14 22 28 0z" fill="#7f1d1d"/><path d="M93 135q7-6 14 0q-7 5-14 0z" fill="#fb7185"/><circle cx="58" cy="112" r="7" fill="#fb7185" opacity=".5"/><circle cx="142" cy="112" r="7" fill="#fb7185" opacity=".5"/></g>
+  <ellipse cx="100" cy="116" rx="10" ry="7" fill="#1f2937"/><ellipse cx="97" cy="113.5" rx="3.5" ry="1.8" fill="#fff" opacity=".6"/><path d="M100 123v4" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
+  <path d="M38 112l-20-5M38 120l-21 3M162 112l20-5M162 120l21 3" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+  <ellipse class="mtalk" cx="100" cy="133" rx="9" ry="7" fill="#7f1d1d"/></g>
+  <g class="ma msteam"><circle cx="20" cy="56" r="7"/><circle cx="10" cy="40" r="5"/><circle cx="180" cy="56" r="7"/><circle cx="190" cy="40" r="5"/></g>
+  <g class="mk mspark"><path d="M20 30l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/><path d="M180 26l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z"/></g>
+  <g class="mdots"><circle cx="150" cy="28" r="4"/><circle cx="164" cy="18" r="5"/><circle cx="180" cy="6" r="6"/></g>
+  <g class="mwaves"><path d="M12 80q-8 16 0 32"/><path d="M2 72q-14 24 0 48"/><path d="M188 80q8 16 0 32"/><path d="M198 72q14 24 0 48"/></g></svg>`,
+  owl:u=>`<svg viewBox="0 0 200 190" aria-hidden="true"><defs><linearGradient id="ow${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b45309"/><stop offset="1" stop-color="#78350f"/></linearGradient></defs>
+  <ellipse cx="100" cy="184" rx="56" ry="5" fill="#000" opacity=".14"/>
+  <g class="mbody"><path d="M36 120q-6 44 22 62h84q28-18 22-62-6-60-64-60T36 120z" fill="url(#ow${u})"/><ellipse cx="100" cy="140" rx="40" ry="42" fill="#fde68a"/><path d="M76 116q6 6 12 0m12 0q6 6 12 0m-30 16q6 6 12 0m12 0q6 6 12 0m-18 16q6 6 12 0m-30 0q6 6 12 0" stroke="#d97706" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/><path d="M34 104q-18 30 4 64q8-30 10-58z" fill="#78350f"/><path d="M166 104q18 30-4 64q-8-30-10-58z" fill="#78350f"/><path d="M80 184l-4 6h18l-2-6zM108 184l-2 6h18l-4-6z" fill="#f59e0b"/></g>
+  <g class="mhead"><path d="M46 70L38 30 82 54z" fill="#78350f"/><path d="M154 70L162 30 118 54z" fill="#78350f"/>
+  <ellipse cx="100" cy="92" rx="62" ry="50" fill="url(#ow${u})"/><path d="M100 62c-30 0-44 18-44 36 22 10 66 10 88 0 0-18-14-36-44-36z" fill="#fcd34d" opacity=".25"/>
+  <circle cx="70" cy="90" r="25" fill="#fff7ed" stroke="#78350f" stroke-width="5"/><circle cx="130" cy="90" r="25" fill="#fff7ed" stroke="#78350f" stroke-width="5"/>
+  <g class="mn"><g class="meyes"><circle cx="72" cy="92" r="11" fill="#111827"/><circle cx="128" cy="92" r="11" fill="#111827"/><circle cx="76" cy="87" r="3.4" fill="#fff"/><circle cx="132" cy="87" r="3.4" fill="#fff"/></g></g>
+  <g class="ma"><g class="meyes"><circle cx="74" cy="96" r="9" fill="#111827"/><circle cx="126" cy="96" r="9" fill="#111827"/><circle cx="77" cy="92" r="2.6" fill="#fff"/><circle cx="129" cy="92" r="2.6" fill="#fff"/></g><path d="M42 62q30-4 54 24L92 68z" fill="#78350f" opacity="0"/><path d="M44 70l54 22v-14L52 56zM156 70l-54 22v-14l46-22z" fill="#451a03"/></g>
+  <g class="mk"><g class="meyes"><path d="M56 96q14-20 28 0M116 96q14-20 28 0" stroke="#111827" stroke-width="6" fill="none" stroke-linecap="round"/></g><circle cx="50" cy="114" r="7" fill="#fb7185" opacity=".55"/><circle cx="150" cy="114" r="7" fill="#fb7185" opacity=".55"/></g>
+  <path d="M100 98l-11 15q11 8 22 0z" fill="#f59e0b" stroke="#b45309" stroke-width="2"/><ellipse class="mtalk" cx="100" cy="120" rx="8" ry="6" fill="#7c2d12"/>
+  <g fill="none" stroke="#1f2937" stroke-width="3.5"><circle cx="70" cy="90" r="29" opacity=".9"/><circle cx="130" cy="90" r="29" opacity=".9"/><path d="M99 88h2"/></g>
+  <path d="M34 46l66-26 66 26-66 26z" fill="#1f2937"/><path d="M70 60v14q30 14 60 0V60" fill="#111827"/><path d="M166 46v22" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><circle cx="166" cy="72" r="5" fill="currentColor"/></g>
+  <g class="ma msteam"><circle cx="20" cy="62" r="7"/><circle cx="10" cy="46" r="5"/><circle cx="180" cy="62" r="7"/><circle cx="190" cy="46" r="5"/></g>
+  <g class="mk mspark"><path d="M18 26l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/><path d="M182 24l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z"/></g>
+  <g class="mdots"><circle cx="150" cy="28" r="4"/><circle cx="164" cy="18" r="5"/><circle cx="180" cy="6" r="6"/></g>
+  <g class="mwaves"><path d="M12 80q-8 16 0 32"/><path d="M2 72q-14 24 0 48"/><path d="M188 80q8 16 0 32"/><path d="M198 72q14 24 0 48"/></g></svg>`};
+  const KNAME={flow:'Флоу',fox:'Лис',owl:'Сова'}, MNAME={angry:'Злой',normal:'Обычный',kind:'Добрый'}, KV={flow:'af_heart',fox:'am_adam',owl:'af_bella'}, MSP={angry:1.05,normal:1,kind:.95};
+  const PERS={angry:'Act as a strict, no-nonsense English teacher and IELTS-style examiner: formal, brief and demanding. Point out every mistake directly but fairly, praise rarely, stay in character. Never insult the student.',normal:'Be a clear, calm and neutral teacher.',kind:'Be warm, encouraging and patient.'};
+  const eng=()=>{try{return Storage.get('ef_voice_engine','device')||'device'}catch(e){return 'device'}};
+  const settingsBar=()=>'<button class="ai-cfg" id="aiCfg"></button><div class="ai-cfgp" id="aiCfgP"><div class="ai-cl">Персонаж</div><div class="ai-kds">'+Object.keys(KNAME).map(k=>'<button class="ai-kd" data-kd="'+k+'"><div class="ai-orb mini idle m-normal">'+MASCOTS[k]('k'+k)+'</div><span>'+KNAME[k]+'</span></button>').join('')+'</div><div class="ai-cl">Характер</div><div class="ai-row">'+Object.keys(MNAME).map(k=>'<button class="ai-md" data-md="'+k+'">'+MNAME[k]+'</button>').join('')+'</div><div class="ai-cl">Голос</div><div class="ai-row"><button class="ai-eng" data-eng="device">Голос телефона</button><button class="ai-eng" data-eng="natural">Естественный (бета)</button></div><div id="aiNatSt" class="ai-nat">Естественный голос скачивается один раз (около 90 МБ) и потом работает на телефоне. Русские фразы читает голос телефона.</div></div><div class="ai-act"><button class="ai-actb" id="aiCall">Позвонить</button><button class="ai-actb" id="aiExam">Экзамен IELTS</button><button class="ai-actb" id="aiSum">Итог разговора</button></div>';
+  const cfgLabel=()=>'Репетитор: '+KNAME[kind]+', '+MNAME[persona].toLowerCase()+', '+(eng()==='natural'&&window.EFVoice&&EFVoice.isNatural()?'естественный голос':'голос телефона');
+  function applyVoice(){ try{EFVoice.setNat({voice:KV[kind],speed:MSP[persona]})}catch(e){} }
+  function paintOrb(){ const o=$('aiOrb'); if(!o) return; o.className='ai-orb '+state+' m-'+persona+' k-'+kind; o.innerHTML=MASCOTS[kind]('main') }
+  function paintCfg(){ const b=$('aiCfg'); if(b) b.textContent=cfgLabel()+'  ▾'; document.querySelectorAll('.ai-kd').forEach(x=>x.classList.toggle('on',x.dataset.kd===kind)); document.querySelectorAll('.ai-md').forEach(x=>x.classList.toggle('on',x.dataset.md===persona)); document.querySelectorAll('.ai-eng').forEach(x=>x.classList.toggle('on',x.dataset.eng===eng())) }
+  async function setEngine(e){
+    const st=$('aiNatSt'); const save=v=>{try{Storage.set('ef_voice_engine',v)}catch(x){}};
+    if(e==='device'){ save('device'); paintCfg(); return }
+    if(EFVoice.isNatural()){ save('natural'); paintCfg(); applyVoice(); stopSp(); EFVoice.speak('Hello! This is my natural voice.'); return }
+    if(st) st.textContent='Скачиваю голос: 0%';
+    try{ await EFVoice.loadNatural(p=>{ if(p&&p.status==='progress'&&/\.onnx/.test(p.file||'')&&st) st.textContent='Скачиваю голос: '+Math.round(p.progress||0)+'%' });
+      save('natural'); applyVoice(); paintCfg(); if(st) st.textContent='Голос готов.'; stopSp(); EFVoice.speak('Hello! This is my natural voice.') }
+    catch(err){ save('device'); paintCfg(); if(st) st.textContent='Не удалось загрузить естественный голос: нужен интернет и современный браузер. Остаётся голос телефона.' }
+  }
+  function bindCfg(){
+    $('aiCfg').onclick=()=>$('aiCfgP').classList.toggle('open');
+    document.querySelectorAll('.ai-kd').forEach(b=>b.onclick=()=>{ kind=b.dataset.kd; try{Storage.set('ef_ai_kind',kind)}catch(e){} paintOrb(); paintCfg(); applyVoice() });
+    document.querySelectorAll('.ai-md').forEach(b=>b.onclick=()=>{ persona=b.dataset.md; try{Storage.set('ef_ai_mood',persona)}catch(e){} paintOrb(); paintCfg(); applyVoice() });
+    document.querySelectorAll('.ai-eng').forEach(b=>b.onclick=()=>setEngine(b.dataset.eng));
+    paintCfg(); applyVoice();
+  }
+  const fmt=ms=>{const t=Math.max(0,Math.round(ms/1000)); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+  const rnd=a=>a[Math.floor(Math.random()*a.length)];
+  /* ---- call mode ---- */
+  function callUI(){ const b=$('aiCall'); if(!b) return; b.textContent=callOn?'Завершить звонок '+fmt(Date.now()-callT0):'Позвонить'; b.classList.toggle('on',callOn) }
+  function startCall(){
+    if(!SR){addMsg('err','Режим звонка нужен голосовой ввод. Открой сайт в Chrome.');return}
+    if(ex) endExam(); callOn=true; callFail=0; voiceOn=true; callT0=Date.now(); clearInterval(callTimer); callTimer=setInterval(callUI,1000); callUI();
+    if(msgs.length) listen(); else { const g='Hi! I am Flow. Let us talk. How was your day?'; addMsg('ai',g); speak(g) }
+  }
+  function endCall(msg){ callOn=false; clearInterval(callTimer); stopSp(); try{rec&&rec.stop()}catch(e){} setState('idle'); callUI(); if(msg) addMsg('err',msg) }
+  function noSpeech(code){
+    if(!(callOn||ex)){ const m=micMsg(code||'no-speech'); if(m) addMsg('err',m); return }
+    if(['not-allowed','service-not-allowed','audio-capture'].includes(code)){ const m=micMsg(code); if(callOn) endCall(m); else { addMsg('err',m) } return }
+    callFail++; if(callFail>=3){ if(callOn) endCall('Звонок завершён: я не слышу речь. Проверь микрофон и язык.'); else addMsg('err','Не слышу ответ. Нажми на микрофон или напиши ответ.'); callFail=0; return }
+    setTimeout(()=>{ if((callOn||(ex&&!ex.long))&&state==='idle'&&!busy) listen() },600);
+  }
+  /* ---- IELTS Speaking practice ---- */
+  const P1={hometown:['Where is your hometown?','What do you like most about your hometown?','Has your hometown changed much in recent years?'],work:['Are you working or studying?','Why did you choose that job or subject?','What do you find most difficult about it?'],hobby:['What do you do in your free time?','How long have you had this hobby?','Do you prefer doing hobbies alone or with others?'],food:['What kind of food do you like?','Do you prefer cooking at home or eating out?','What is a traditional dish in your country?']};
+  const P2=[{t:'Describe a place you visited that you really liked.',pts:['where it was','when you went there','what you did there','and explain why you liked it'],p3:['Why do people like to travel?','How has tourism changed in your country?','Should governments protect famous tourist places? Why?','Is travelling more important for young people than for older people?']},
+    {t:'Describe a person who has helped you.',pts:['who this person is','how you know them','how they helped you','and explain how you felt about it'],p3:['Why is it important for people to help each other?','Who should help children more, parents or teachers?','Has technology changed the way people help each other?','Do people help strangers less than before?']},
+    {t:'Describe a useful skill you have learned.',pts:['what the skill is','when and how you learned it','who taught you','and explain why it is useful'],p3:['Which skills are most important for young people today?','Is it better to learn skills at school or by yourself?','How will skills at work change in the future?','Why do some people find it hard to learn new things?']}];
+  const EXSYS=()=>'You are an experienced IELTS Speaking coach giving LEARNING feedback on a transcript from a practice test. The transcript comes from speech-to-text, so punctuation and pronunciation cannot be judged. Student level: '+level()+'. Reply in Russian with short English examples. Plain text only: no tables, no markdown, no emojis. Structure: 1) Strengths, two points. 2) Fluency and Coherence. 3) Lexical Resource: three better words or phrases. 4) Grammatical Range and Accuracy: the three most important mistakes with corrections. 5) One thing to practise tomorrow. Say that pronunciation cannot be assessed from text. You may give an approximate CEFR level. Never give an official IELTS band score; say this is a practice estimate only. Maximum 200 words.';
+  const SELF='Самопроверка по критериям IELTS Speaking (учебная, не официальная оценка):\n1. Беглость и связность: говорил(а) без долгих пауз, связывал(а) мысли?\n2. Лексика: использовал(а) разные слова, а не одни и те же?\n3. Грамматика: были ли сложные предложения и сколько ошибок?\n4. Произношение: понятно ли звучали слова и ударения?\nОцени каждый пункт от 1 до 5 и повтори тему завтра.';
+  function setExBtn(text,fn){ const c=$('aiExBtn'); if(!c) return; c.innerHTML=''; if(!text) return; const b=document.createElement('button'); b.className='ai-actb on'; b.textContent=text; b.onclick=fn; c.appendChild(b) }
+  function exTimer(label,sec,done){ clearInterval(ex.t); let left=sec; const tick=()=>{ if(!ex){return} const st=$('aiSt'); if(st) st.textContent=label+': '+fmt(left*1000); if(left--<=0){ clearInterval(ex.t); done() } }; tick(); ex.t=setInterval(tick,1000) }
+  function examSay(text,cb){ addMsg('ai',text); speak(text,cb) }
+  function startExam(){
+    if(callOn) endCall(); msgs=[]; renderChat();
+    const tp=Object.keys(P1).sort(()=>Math.random()-.5).slice(0,2), card=rnd(P2);
+    ex={part:1,i:0,qs:P1[tp[0]].concat(P1[tp[1]].slice(0,2)),card,p3:card.p3.slice(),log:[],t:0,long:false,acc:'',restart:false}; callFail=0;
+    $('aiExam').textContent='Завершить экзамен';
+    examSay('This is an IELTS Speaking practice. Part 1. I will ask you some questions about yourself. Answer naturally, in a few sentences.',()=>examAsk());
+  }
+  function examListen(){ if(ex&&!ex.long&&SR) setTimeout(()=>{ if(ex&&!ex.long&&state==='idle'&&!busy) listen() },300) }
+  function examAsk(){
+    if(!ex) return;
+    if(ex.part===1){ if(ex.i>=ex.qs.length) return examPart2(); examSay(ex.qs[ex.i],examListen) }
+    else if(ex.part===3){ if(ex.i>=ex.p3.length) return examFinish(); examSay(ex.p3[ex.i],examListen) }
+  }
+  function examAnswer(t){
+    if(!ex) return;
+    if(ex.long){ ex.acc+=(ex.acc?' ':'')+t; endLong(true); return }
+    if(ex.part===2) return;
+    ex.log.push({part:ex.part,q:ex.part===1?ex.qs[ex.i]:ex.p3[ex.i],a:t}); ex.i++; callFail=0; setTimeout(()=>examAsk(),500);
+  }
+  function examPart2(){
+    ex.part=2; const c=ex.card;
+    examSay('Now Part 2. I will give you a topic. You have one minute to prepare, then speak for one to two minutes.',()=>{
+      addMsg('ai','Topic: '+c.t+'\nYou should say: '+c.pts.join('; ')+'.'); speak(c.t);
+      setExBtn('Начать сейчас',()=>{ clearInterval(ex.t); setExBtn(); examLong() }); exTimer('Подготовка',60,()=>{ setExBtn(); examLong() });
+    });
+  }
+  function examLong(){
+    if(!ex) return; ex.long=true; ex.acc=''; stopSp();
+    if(!SR){ addMsg('err','Голосовой ввод недоступен. Напиши ответ текстом и нажми отправить.'); setExBtn('Закончить ответ',()=>endLong()); return }
+    addMsg('ai','Please start speaking now.'); setExBtn('Закончить ответ',()=>endLong()); exTimer('Говори',120,()=>endLong());
+    rec=new SR(); rec.lang='en-US'; rec.interimResults=true; rec.continuous=true; ex.restart=true;
+    rec.onresult=e=>{ let inter=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) ex.acc+=(ex.acc?' ':'')+r[0].transcript.trim(); else inter+=r[0].transcript } const inp=$('aiIn'); if(inp) inp.value=(ex.acc+' '+inter).slice(-110) };
+    rec.onend=()=>{ if(ex&&ex.long&&ex.restart){ try{rec.start()}catch(e){} } };
+    rec.onerror=e=>{ if(e&&(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture')){ addMsg('err',micMsg(e.error)); ex.restart=false } };
+    try{rec.start(); setState('listening')}catch(e){}
+  }
+  function endLong(typed){
+    if(!ex||!ex.long) return; ex.restart=false; ex.long=false; try{rec&&rec.stop()}catch(e){} clearInterval(ex.t); setExBtn(); setState('idle');
+    const inp=$('aiIn'); if(inp) inp.value=''; const a=ex.acc.trim()||'(no answer)'; if(typed!==true) addMsg('me',a);
+    ex.log.push({part:2,q:ex.card.t,a}); ex.part=3; ex.i=0; callFail=0;
+    examSay('Thank you. Now Part 3. Let us discuss some more general questions.',()=>examAsk());
+  }
+  async function examFinish(){
+    const log=ex.log; clearInterval(ex.t); ex=null; setExBtn(); const b=$('aiExam'); if(b) b.textContent='Экзамен IELTS';
+    addMsg('ai','Thank you. That is the end of the speaking practice. Preparing your feedback.'); setState('thinking');
+    const tr=log.map(x=>'Part '+x.part+' | Question: '+x.q+'\nAnswer: '+x.a).join('\n\n');
+    try{ const fb=await ask([{role:'user',text:'Transcript of my IELTS Speaking practice:\n\n'+tr}],EXSYS()); setState('idle'); addMsg('ai',fb) }
+    catch(e){ setState('idle'); addMsg('err',friendly(e)); addMsg('ai',SELF) }
+  }
+  function endExam(msg){ if(!ex) return; clearInterval(ex.t); ex.restart=false; ex=null; try{rec&&rec.stop()}catch(e){} stopSp(); setExBtn(); setState('idle'); const b=$('aiExam'); if(b) b.textContent='Экзамен IELTS'; if(msg) addMsg('err',msg) }
+  document.addEventListener('keydown',e=>{ if(e.code!=='Space'||spaceDown) return; const v=$('view-tutor'); if(!v||!v.classList.contains('active')||tab!=='chat') return; const a=document.activeElement; if(a&&/INPUT|TEXTAREA|BUTTON|SELECT/.test(a.tagName)) return; e.preventDefault(); spaceDown=true; if(state!=='listening') listen() });
+  document.addEventListener('keyup',e=>{ if(e.code==='Space'&&spaceDown){ spaceDown=false; if(state==='listening'){ try{rec&&rec.stop()}catch(x){} } } });
   function renderChat(){
     const p=$('tuChatPane'); if(!p) return; const has=!!getProv();
-    p.innerHTML='<div class="ai-orb '+state+'" id="aiOrb"></div><div class="ai-st" id="aiSt">'+LAB[state]+'</div>'
+    p.innerHTML='<div class="ai-orb '+state+' m-'+persona+' k-'+kind+'" id="aiOrb">'+MASCOTS[kind]('main')+'</div><div class="ai-st" id="aiSt">'+LAB[state]+'</div>'+settingsBar()
       +((!has||setup)?setupCard():'')
       +'<div class="ai-log" id="aiLog"></div>'
       +'<div class="ai-chips" id="aiChips">'+CHIPS.map(c=>'<button class="ai-chip">'+esc(c)+'</button>').join('')+'</div>'
-      +'<div class="ai-dock"><button class="tu-mic" id="aiMic" aria-label="Говорить">'+MIC+'</button><input id="aiIn" placeholder="'+(has?'Напиши или скажи что-нибудь…':'Спроси: как сказать «спасибо»?')+'" autocomplete="off"><button class="tu-send" id="aiSend" aria-label="Отправить">'+SEND+'</button></div>'
+      +'<div id="aiExBtn" class="ai-exbtn"></div><div class="ai-dock"><button class="tu-mic" id="aiMic" aria-label="Говорить">'+MIC+'</button><input id="aiIn" placeholder="'+(has?'Напиши или скажи что-нибудь…':'Спроси: как сказать «спасибо»?')+'" autocomplete="off"><button class="tu-send" id="aiSend" aria-label="Отправить">'+SEND+'</button></div>'
       +'<div class="ai-tools"><span>Говорю:</span><button id="aiEn" class="'+(lang==='en-US'?'on':'')+'">English</button><button id="aiRu" class="'+(lang==='ru-RU'?'on':'')+'">Русский</button><button id="aiVoice">Озвучка: '+(voiceOn?'вкл':'выкл')+'</button><button id="aiVP">'+vpLabel()+'</button><button id="aiExp">Объяснения: '+(explain==='ru'?'по-русски':'по-английски')+'</button><button id="aiKeyTog">'+(has?'ИИ: '+provName():'Подключить ИИ')+'</button><button id="aiNew">Новый диалог</button></div>';
     const log=$('aiLog'); msgs.forEach(m=>log.appendChild(bubble(m.r,m.t)));
     if(msgs.length) $('aiChips').style.display='none';
     p.querySelectorAll('.ai-chip').forEach(b=>b.onclick=()=>send(b.textContent));
     $('aiSend').onclick=()=>{const i=$('aiIn'); const v=i.value; i.value=''; send(v)};
     $('aiIn').onkeydown=e=>{if(e.key==='Enter'){const v=e.target.value; e.target.value=''; send(v)}};
-    $('aiMic').onclick=listen;
+    const mic=$('aiMic'); mic.style.touchAction='none'; mic.oncontextmenu=e=>e.preventDefault();
+    mic.onpointerdown=e=>{ e.preventDefault(); holdAt=Date.now(); if(state==='listening'){ try{rec&&rec.stop()}catch(x){} setState('idle'); holdAt=0 } else listen() };
+    const rel=()=>{ if(holdAt&&Date.now()-holdAt>500&&state==='listening'){ try{rec&&rec.stop()}catch(x){} } holdAt=0 };
+    mic.onpointerup=rel; mic.onpointerleave=rel; mic.onpointercancel=rel;
+    bindCfg();
+    $('aiCall').onclick=()=>callOn?endCall():startCall(); $('aiExam').onclick=()=>ex?endExam('Экзамен завершён.'):startExam();
+    $('aiSum').onclick=()=>{ if(msgs.filter(m=>m.r==='me').length<2){ addMsg('err','Сначала немного поговори, потом попроси итог.'); return } send('Дай короткий итог разговора: мои главные ошибки с исправлениями и 5 полезных слов. Простым текстом.') };
+    callUI(); if(ex) $('aiExam').textContent='Завершить экзамен';
     $('aiEn').onclick=()=>{lang='en-US';renderChat()}; $('aiRu').onclick=()=>{lang='ru-RU';renderChat()};
     $('aiVoice').onclick=()=>{voiceOn=!voiceOn; if(!voiceOn) stopSp(); $('aiVoice').textContent='Озвучка: '+(voiceOn?'вкл':'выкл')};
     $('aiVP').onclick=vpNext; $('aiExp').onclick=()=>{explain=explain==='ru'?'en':'ru'; $('aiExp').textContent='Объяснения: '+(explain==='ru'?'по-русски':'по-английски')};
@@ -5407,7 +5606,7 @@ window.EFChat=(function(){
     p.querySelectorAll('.ai-opt').forEach(b=>b.onclick=()=>choose(b.dataset.p)); if($('aiKeyBtn')){$('aiKeyBtn').onclick=saveKey; $('aiKey').onkeydown=e=>{if(e.key==='Enter')saveKey()}}
   }
   function show(){
-    const v=$('view-tutor'); if(!v) return; document.body.classList.add('tu-on');
+    const v=$('view-tutor'); if(!v) return; document.body.classList.add('tu-on'); try{ if(eng()==='natural'&&!EFVoice.isNatural()) EFVoice.loadNatural().catch(()=>{}) }catch(e){}
     if(!$('tuChatPane')){
       v.innerHTML='<h2 class="section-title">Репетитор</h2><p class="section-desc">Разговор с ИИ, переводы и короткие сценарии. Отвечай голосом или текстом.</p><div class="tu-seg"><button data-t="chat">ИИ-чат</button><button data-t="scn">Сценарии</button></div><div id="tuChatPane"></div><div id="tuScn" style="display:none"></div>';
       v.querySelectorAll('.tu-seg button').forEach(b=>b.onclick=()=>pick(b.dataset.t));
@@ -5417,9 +5616,9 @@ window.EFChat=(function(){
   function pick(t){
     tab=t; document.querySelectorAll('.tu-seg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
     $('tuChatPane').style.display=t==='chat'?'':'none'; $('tuScn').style.display=t==='scn'?'':'none';
-    if(t==='chat'){ renderChat() } else { stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
+    if(t==='chat'){ renderChat() } else { if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
   }
-  function stop(){stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
+  function stop(){ if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
   return{show,stop,send,_local:local,_state:()=>({msgs,model,state})};
 })();
 </script>
@@ -5439,5 +5638,54 @@ body.tb-off .top-bar{display:none!important}
     const o=A.switchView.bind(A); A.switchView=function(v){const r=o(v); apply(v); return r}} else if(Date.now()-t0>10000) clearInterval(h)},120);
 })();
 </script>
-<style>.ai-go{display:inline-block;margin:8px 6px 0 0;padding:8px 14px;border-radius:999px;border:1px solid var(--accent);background:var(--bg);color:var(--accent);font-weight:700;font-size:.85rem;cursor:pointer}</style></body>
+<style>.ai-go{display:inline-block;margin:8px 6px 0 0;padding:8px 14px;border-radius:999px;border:1px solid var(--accent);background:var(--bg);color:var(--accent);font-weight:700;font-size:.85rem;cursor:pointer}</style><style>
+.ai-orb{background:none!important;box-shadow:none!important;border-radius:0!important;width:150px!important;height:142px!important;margin:0 auto 2px!important;animation:none!important;position:relative;--glow:#22d3ee;color:#3b82f6;transition:color .5s ease}
+.ai-orb.m-angry{color:#ef4444;--glow:#f87171}.ai-orb.m-kind{color:#22c55e;--glow:#4ade80}
+.ai-orb::before,.ai-orb::after{display:none!important}
+.ai-orb svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 8px 10px rgba(0,0,0,.18))}
+.ai-orb .ma,.ai-orb .mk{display:none}.ai-orb.m-angry .mn,.ai-orb.m-kind .mn{display:none}.ai-orb.m-angry .ma{display:block}.ai-orb.m-kind .mk{display:block}
+.ai-orb .geye{fill:var(--glow);filter:drop-shadow(0 0 5px var(--glow))}.ai-orb .gline{fill:none;stroke:var(--glow);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 4px var(--glow))}
+.ai-orb .dline{fill:none;stroke:#1f2937;stroke-width:4;stroke-linecap:round}
+.ai-orb .msteam circle{fill:#e5e7eb;opacity:0}.ai-orb .mspark path{fill:#fbbf24;opacity:.9;transform-box:fill-box;transform-origin:center;animation:mSpark 1.8s ease-in-out infinite}
+.ai-orb .mdots,.ai-orb .mwaves{display:none}.ai-orb .mdots circle{fill:currentColor}.ai-orb .mwaves path{fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;opacity:.6}
+.ai-orb .mtalk{display:none}
+.ai-orb .mhead,.ai-orb .mbody{transform-box:fill-box;transform-origin:center bottom}
+.ai-orb .meyes{transform-box:fill-box;transform-origin:center;animation:mBlink 4.6s infinite}
+.ai-orb.idle .mhead{animation:mFloat 4.2s ease-in-out infinite}.ai-orb.idle .mbody{animation:mBreathe 4.2s ease-in-out infinite}
+.ai-orb.idle .mbulb{animation:mPulse 2.4s ease-in-out infinite}
+.ai-orb.m-angry .msteam circle{animation:mSteam 1.6s ease-out infinite}.ai-orb.m-angry .msteam circle:nth-child(even){animation-delay:.8s}
+.ai-orb.listening .mhead{animation:mTilt 1.6s ease-in-out infinite}.ai-orb.listening .mwaves{display:block}.ai-orb.listening .mwaves path{animation:mWave 1.2s ease-in-out infinite}.ai-orb.listening .mwaves path:nth-child(even){animation-delay:.3s}
+.ai-orb.listening .meyes{animation:none;transform:scale(1.18)}
+.ai-orb.thinking .mhead{animation:mTilt 2s ease-in-out infinite}.ai-orb.thinking .meyes{animation:none;transform:translate(0,-5px)}.ai-orb.thinking .mdots{display:block}.ai-orb.thinking .mdots circle{animation:mDot 1.2s infinite}.ai-orb.thinking .mdots circle:nth-child(2){animation-delay:.2s}.ai-orb.thinking .mdots circle:nth-child(3){animation-delay:.4s}
+.ai-orb.speaking .mhead{animation:mBob .55s ease-in-out infinite}.ai-orb.speaking .mbody{animation:mBreathe .55s ease-in-out infinite}.ai-orb.speaking .mmouth{display:none}.ai-orb.speaking .mtalk{display:block;transform-box:fill-box;transform-origin:center;animation:mTalk .3s ease-in-out infinite}
+@keyframes mBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes mFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes mBreathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,1.03)}}
+@keyframes mPulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes mTilt{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes mBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(1.5deg)}}
+@keyframes mTalk{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1.3)}}
+@keyframes mSteam{0%{opacity:.9;transform:translateY(0) scale(.6)}100%{opacity:0;transform:translateY(-20px) scale(1.4)}}
+@keyframes mSpark{0%,100%{transform:scale(.7) rotate(0);opacity:.5}50%{transform:scale(1.15) rotate(20deg);opacity:1}}
+@keyframes mWave{0%,100%{opacity:.15}50%{opacity:.8}}
+@keyframes mDot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+
+.ai-orb.mini{width:74px!important;height:70px!important;margin:0 auto!important}.ai-orb.mini svg{filter:none}
+.ai-cfg{display:block;width:100%;margin:2px 0 8px;padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.85rem;font-weight:700;text-align:left;cursor:pointer}
+.ai-cfgp{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius,20px);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}.ai-cfgp.open{display:block;animation:tuIn .35s var(--ease,ease) both}
+.ai-cl{font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--text-secondary);margin:10px 0 6px}.ai-cl:first-child{margin-top:0}
+.ai-kds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ai-kd{padding:8px 4px 6px;border-radius:16px;border:2px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .3s var(--ease,ease)}.ai-kd span{display:block;font-size:.78rem;font-weight:700;margin-top:2px}
+.ai-kd.on{border-color:var(--accent)}
+.ai-row{display:flex;gap:8px;flex-wrap:wrap}
+.ai-md,.ai-eng{flex:1;padding:9px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .3s var(--ease,ease)}
+.ai-md.on,.ai-eng.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ai-nat{margin-top:8px;font-size:.78rem;color:var(--text-secondary)}
+</style><style>
+.ai-act{display:flex;gap:8px;margin-bottom:12px}
+.ai-actb{flex:1;padding:11px 8px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .3s var(--ease,ease)}
+.ai-actb.on{background:#ef4444;border-color:#ef4444;color:#fff}
+.ai-exbtn{display:flex;margin-bottom:8px}.ai-exbtn .ai-actb{background:var(--accent);border-color:var(--accent);color:#fff}
+#aiMic{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+</style></body>
 </html>
