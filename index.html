@@ -4630,8 +4630,8 @@ memory(el,e,pool,nx,mk){const p=shuf(pool).slice(0,6),t=shuf(p.flatMap(x=>[{x,t:
   const ca=t[a.dataset.i];if(ca.x===c.x){[a,b].forEach(z=>{z.classList.remove('on');z.classList.add('ok')});mk(c.x,1);a=null;if(!--left){tip('Все пары найдены!');setTimeout(nx,900)}}else{lock=1;const o=a;a=null;setTimeout(()=>{[o,b].forEach(z=>{z.classList.remove('on');z.textContent='?'});lock=0},750)}})},
 swipe(el,e,pool,nx,mk){el.innerHTML=`<div class="xc" id="sw" style="touch-action:pan-y;cursor:grab;min-height:170px"><h3>${esc(e.k)}</h3><small>${e.t||''}</small><small id="swr" hidden><b>${esc(e.ru)}</b></small><small>Тап — перевод. Вправо — знаю, влево — учу</small></div>`;const c=$('#sw');let x0=0,dx=0,dn=0;
  c.onpointerdown=ev=>{dn=1;x0=ev.clientX;c.setPointerCapture(ev.pointerId);c.style.transition='none'};
- c.onpointermove=ev=>{if(!dn)return;dx=ev.clientX-x0;const vx=Math.abs(ev.movementX||0);c.style.filter=vx>3?'url(#mbh)':'';document.getElementById('mbhg').setAttribute('stdDeviation',Math.min(vx/3,7)+' 0');c.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;c.style.background=dx>0?'var(--success-light)':'var(--danger-light)'};
- c.onpointerup=()=>{dn=0;c.style.transition='transform .35s cubic-bezier(.22,1,.36,1),opacity .35s';if(Math.abs(dx)>90){c.style.transform=`translateX(${dx*5}px) rotate(${dx/5}deg)`;c.style.opacity=0;c.style.filter='url(#mbh)';document.getElementById('mbhg').setAttribute('stdDeviation','7 0');mk(e,dx>0);say(e.k);setTimeout(nx,300)}else{c.style.filter='';if(Math.abs(dx)<4){$('#swr').hidden=false;say(e.k)}c.style.transform='';c.style.background=''}dx=0}},
+ c.onpointermove=ev=>{if(!dn)return;dx=ev.clientX-x0;c.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;c.style.background=dx>0?'var(--success-light)':'var(--danger-light)'};
+ c.onpointerup=()=>{dn=0;c.style.transition='transform .35s cubic-bezier(.22,1,.36,1),opacity .35s';if(Math.abs(dx)>90){c.style.transform=`translateX(${dx*5}px) rotate(${dx/5}deg)`;c.style.opacity=0;mk(e,dx>0);say(e.k);setTimeout(nx,300)}else{if(Math.abs(dx)<4){$('#swr').hidden=false;say(e.k)}c.style.transform='';c.style.background=''}dx=0}},
 tf(el,e,pool,nx,mk){const ok=Math.random()<.5,ru=ok?e.ru:rnd(pool.filter(x=>x!==e)).ru;el.innerHTML=`<div class="xc"><h3>${esc(e.k)}</h3><small>${esc(ru.split(',')[0])}</small></div><div class="xg"><button class="xo">Неверно</button><button class="xo">Верно</button></div>`;
  el.querySelectorAll('.xo').forEach((b,i)=>b.onclick=()=>{const g=(i===1)===ok;el.querySelectorAll('.xo').forEach(x=>x.disabled=true);b.classList.add(g?'ok':'no');mk(e,g);say(e.k);setTimeout(nx,900)})},
 gaps(el,e,pool,nx,mk){const m=[...e.k].map((c,i)=>/[a-z]/i.test(c)&&i%2===1?'_':c).join(' ');typeQ(el,`<small>${esc(e.ru)}</small><h3 style="letter-spacing:2px">${esc(m)}</h3>`,e.k,e,nx,mk)},
@@ -4703,7 +4703,7 @@ function init(){
    SC[id]={n,l:[l1,l2],d:[d1,d2],b:[color,l2,d2]};
    DR[id]=(_, time)=>EFExperience.paint(cx,id,W,H,time);
  }
- if(!Object.hasOwn(SC,L.bg)&&L.bg!=='off')L.bg='sakura';
+ if(L.bg==='photo'?!localStorage.getItem('ef_photo'):L.bg!=='off'&&!Object.hasOwn(SC,L.bg))L.bg='sakura';
  const a=A(),host=$('#view-list').parentNode,after=$('.nav-link[data-view=wordbox]');
  const T=[['path','map','Путь: урок дня','Путь: урок дня','Готовый план на каждый день: слова, игры, диктант и перевод. Репетитор не нужен.','<div id="phBody"></div>',path],['book','music','Из учебника','Фразы из учебника','17 способов выучить слова с твоей страницы Word Box.','<div class="goal-text" id="bkPro"></div><div class="xk" id="bkTabs"></div><div id="bkBody"></div>',book],
   ['lesson','languages','Урок: перевод','Урок: русский → английский','Учитель говорит по-русски, ты пишешь перевод на английском.','<div id="lsBody"></div>',lesson],
@@ -4908,6 +4908,7 @@ window.EFVoice=(function(){
   }
   function devSpeakAsync(text,lang,opts){
     return new Promise(res=>{
+      try{natSrc?.stop()}catch(e){}
       if(!syn){res();return}
       const my=++token; try{syn.resume()}catch(e){} try{syn.cancel()}catch(e){}
       const c=cfg(), ru=lang==='ru', v=pick(ru?'ru':'en',ru?null:c.voiceName), parts=split(text);
@@ -5182,7 +5183,7 @@ window.EFRes=(function(){
     const items=L.filter(r=>(cat==='Все'||(cat==='★ Мои'?fv.includes(r.u):r.c===cat))&&(!ql||(r.n+' '+r.w+' '+r.c).toLowerCase().includes(ql))&&forLevel(r,level)&&(!access||access===r.k));
     box.querySelector('#rsCount').textContent='Найдено: '+items.length+' из '+L.length;
     box.querySelector('.rs-bar').innerHTML=C.map(c=>'<button class="rs-chip'+(c===cat?' on':'')+'" data-c="'+c+'" aria-pressed="'+(c===cat)+'">'+c+'</button>').join('');
-    box.querySelector('#rsList').innerHTML=items.length?items.map(card).join(''):'<p style="color:var(--text-secondary);text-align:center;padding:20px">'+(cat==='★ Мои'?'Пока нет закладок. Нажми ☆ у ресурса.':'Ничего не найдено.')+'</p>';
+    box.querySelector('#rsList').innerHTML=items.length?items.map(card).join(''):'<p style="color:var(--text-secondary);text-align:center;padding:20px">'+(cat==='★ Мои'&&!fv.length?'Пока нет закладок. Нажми ☆ у ресурса.':'Ничего не найдено.')+'</p>';
   }
   function render(){
     const v=document.getElementById('view-free'); if(!v) return;
@@ -5195,7 +5196,7 @@ window.EFRes=(function(){
       d.querySelector('#rsLevel').onchange=e=>{level=e.target.value;draw()};
       d.querySelector('#rsAccess').onchange=e=>{access=e.target.value;draw()};
       d.addEventListener('click',e=>{
-        const c=e.target.closest('.rs-chip'); if(c){cat=c.dataset.c;draw();return}
+        const c=e.target.closest('.rs-chip'); if(c){cat=c.dataset.c;draw();d.querySelector('.rs-chip.on')?.focus();return}
         const st=e.target.closest('.rs-star'); if(st){let f=favs(); const u=st.dataset.u; f=f.includes(u)?f.filter(x=>x!==u):f.concat(u); try{Storage.set('ef_res_fav',f)}catch(x){} draw()}
       });
     }
@@ -5377,7 +5378,7 @@ window.EFChat=(function(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const LAB={idle:'Готов',listening:'Слушаю…',thinking:'Думаю…',speaking:'Говорю…'};
   const CHIPS=['Давай поговорим по-английски','Как сказать «я опаздываю»?','Исправь: I goed to school yesterday','Объясни Present Perfect просто','IELTS Speaking Part 1: задай вопрос'];
-  let practiceState={}, turn=0, dismissRequest=null;
+  let practiceState={}, turn=0, dismissRequest=null, selection=0;
   let msgs=[],state='idle',lang='en-US',voiceOn=Storage.get('ef_tutor_voice',true),model=null,rec=null,busy=false,tab='chat',setup=false,spTok=0,explain='en',callOn=false,callFail=0,callT0=0,callTimer=0,ex=null,holdAt=0,spaceDown=false;
   let persona='angry',kind='flow'; try{persona=Storage.get('ef_ai_mood','angry')||'angry'; kind=Storage.get('ef_ai_kind','flow')||'flow'}catch(e){} if(!['angry','normal','kind'].includes(persona)) persona='angry'; if(!['flow','fox','owl'].includes(kind)) kind='flow';
   const $=id=>document.getElementById(id);
@@ -5423,8 +5424,8 @@ window.EFChat=(function(){
     } else d.textContent=t;
     return d;
   }
-  function addMsg(r,t){
-    msgs.push({r,t}); if(msgs.length>60) msgs.shift(); const log=$('aiLog'); if(!log) return;
+  function addMsg(r,t,local=false){
+    msgs.push({r,t,local}); if(msgs.length>60) msgs.shift(); const log=$('aiLog'); if(!log) return;
     const typ=$('aiTyping'); if(typ) typ.remove();
     const d=bubble(r,t); log.appendChild(d); d.scrollIntoView({block:'nearest',behavior:'smooth'});
     const c=$('aiChips'); if(c) c.style.display='none';
@@ -5448,14 +5449,15 @@ window.EFChat=(function(){
   const setProv=p=>{try{Storage.set('ef_ai_prov',p)}catch(e){}};
   const provName=()=>({local:'встроенная практика',puter:'Puter',gemini:'Gemini',proxy:'сервис сайта'}[getProv()]);
   const PUTER_MODELS=['gpt-5-nano','gpt-4o-mini']; let puterP=null;
-  async function callGemini(list,sys,signal){
+  async function callGemini(list,sys,signal,candidateKey){
+    const key=candidateKey??getKey(), preferred=candidateKey?null:model;
     const contents=list.map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.text}]})); let last=null;
-    for(const m of (model?[model,...MODELS.filter(m=>m!==model)]:MODELS)){
-      let r; try{ r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':getKey()},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{temperature:.7,maxOutputTokens:500}})}); }catch(e){ throw {code:'net'} }
-      if(r.status===404){last={code:404};model=null;continue}
+    for(const m of (preferred?[preferred,...MODELS.filter(m=>m!==preferred)]:MODELS)){
+      let r; try{ r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{temperature:.7,maxOutputTokens:500}})}); }catch(e){ throw {code:'net'} }
+      if(r.status===404){last={code:404};if(!candidateKey)model=null;continue}
       if(!r.ok){let j={}; try{j=await r.json()}catch(e){} throw {code:r.status,msg:(j.error&&j.error.message)||''}}
       const j=await r.json(); const p=(((j.candidates||[])[0]||{}).content||{}).parts; const txt=p?p.map(x=>x.text||'').join('').trim():'';
-      if(!txt) throw {code:'empty'}; model=m; return txt;
+      if(!txt) throw {code:'empty'}; if(!candidateKey)model=m; return txt;
     }
     throw last||{code:404};
   }
@@ -5503,7 +5505,7 @@ window.EFChat=(function(){
       timer=setTimeout(()=>cancel('timeout'),18000);
     });
     if(opt?.chat) dismissRequest=()=>cancel('cancelled');
-    try { return await Promise.race([call(list,sys,controller.signal),deadline]); }
+    try { return await Promise.race([call(list,sys,controller.signal,opt?.candidateKey),deadline]); }
     finally { clearTimeout(timer);if(opt?.chat)dismissRequest=null; }
   }
   function friendly(e){
@@ -5533,12 +5535,12 @@ window.EFChat=(function(){
   }
   async function send(text){
     text=String(text||'').trim();if(!text||busy)return;
-    if(ex){stopSp();if(!ex.long)addMsg('me',text);examAnswer(text);return}
-    const id=++turn;
-    stopSp();if(voiceOn)EFVoice.prepareAudio();busy=true;addMsg('me',text);setState('thinking');
+    if(ex){stopSp();if(!ex.long)addMsg('me',text,getProv()==='local');examAnswer(text);return}
+    const id=++turn, localMode=getProv()==='local';
+    stopSp();if(voiceOn)EFVoice.prepareAudio();busy=true;addMsg('me',text,localMode);setState('thinking');
     let reply, fallback=false;
     try{
-      if(getProv()==='local'){reply=local(text);fallback=true}
+      if(localMode){reply=local(text);fallback=true}
       else{
         const list=msgs.filter(x=>x.r!=='err'&&!x.local).slice(-12).map(x=>({role:x.r==='ai'?'assistant':'user',text:x.t}));
         reply=await ask(list,SYS(),{chat:true});
@@ -5549,8 +5551,7 @@ window.EFChat=(function(){
       reply=local(text);fallback=true;
     }finally{if(id===turn)busy=false}
     if(id!==turn)return;
-    setState('idle');addMsg('ai',reply);
-    if(fallback&&msgs.length)msgs.at(-1).local=true;
+    setState('idle');addMsg('ai',reply,fallback);
     if(voiceOn)speak(reply);
     $('aiIn')?.focus({preventScroll:true});
   }
@@ -5573,6 +5574,7 @@ window.EFChat=(function(){
   }
   const OKQ=[{role:'user',text:'Reply with the single word OK'}];
   async function choose(p){
+    const id=++selection;
     if(p==='local'){cancelTurn();setProv('local');setup=false;renderChat();return}
     if(p==='gemini'){ $('aiKeyBox').style.display='flex'; $('aiKey').focus(); return }
     const st=$('aiKeySt'), buttons=Array.from(document.querySelectorAll('.ai-opt'));
@@ -5588,7 +5590,7 @@ window.EFChat=(function(){
         if(!window.puter.auth.isSignedIn())await window.puter.auth.signIn();
       }
       await ask(OKQ,'You are a test.',{only:p});
-      if(!st.isConnected)return;
+      if(id!==selection||!st.isConnected)return;
       cancelTurn();setProv(p);setup=false;renderChat();
     }catch(e){st.textContent=e?.code?friendly(e):'Вход не завершён. Разреши всплывающие окна и попробуй ещё раз.'}
     finally{buttons.forEach(b=>b.disabled=false)}
@@ -5596,10 +5598,13 @@ window.EFChat=(function(){
   async function saveKey(){
     const k=$('aiKey').value.trim(), st=$('aiKeySt'), button=$('aiKeyBtn');
     if(!k||button.disabled)return;
-    const previous=Storage.get(KEY,'');setKey(k);model=null;button.disabled=true;
+    const id=++selection;button.disabled=true;
     st.textContent='Проверяю ключ…';
-    try{ await ask(OKQ,'You are a test.',{only:'gemini'});cancelTurn();setProv('gemini');setup=false;renderChat() }
-    catch(e){ setKey(previous);st.textContent=friendly(e) }
+    try{
+      await ask(OKQ,'You are a test.',{only:'gemini',candidateKey:k});
+      if(id!==selection||!setup||!st.isConnected)return;
+      cancelTurn();setKey(k);model=null;setProv('gemini');setup=false;renderChat();
+    }catch(e){ if(id===selection&&st.isConnected)st.textContent=friendly(e) }
     finally{button.disabled=false}
   }
   function setupCard(){
@@ -5797,7 +5802,7 @@ window.EFChat=(function(){
     $('aiEn').onclick=()=>{lang='en-US';renderChat()}; $('aiRu').onclick=()=>{lang='ru-RU';renderChat()};
     $('aiVoice').onclick=()=>{voiceOn=!voiceOn; Storage.set('ef_tutor_voice',voiceOn);if(!voiceOn) stopSp();else EFVoice.prepareAudio(); $('aiVoice').textContent='Озвучка: '+(voiceOn?'вкл':'выкл')};
     $('aiVP').onclick=vpNext; $('aiExp').onclick=()=>{explain=explain==='ru'?'en':'ru'; $('aiExp').textContent='Объяснения: '+(explain==='ru'?'по-русски':'по-английски')};
-    $('aiKeyTog').onclick=()=>{setup=!setup; renderChat()};
+    $('aiKeyTog').onclick=()=>{selection++;setup=!setup;renderChat()};
     $('aiNew').onclick=()=>{if(callOn)endCall();if(ex)endExam();stopSp();cancelTurn();msgs=[];practiceState={};renderChat()};
     p.querySelectorAll('.ai-opt').forEach(b=>b.onclick=()=>choose(b.dataset.p)); if($('aiKeyBtn')){$('aiKeyBtn').onclick=saveKey; $('aiKey').onkeydown=e=>{if(e.key==='Enter')saveKey()}}
   }
@@ -5812,9 +5817,9 @@ window.EFChat=(function(){
   function pick(t){
     tab=t; document.querySelectorAll('.tu-seg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
     $('tuChatPane').style.display=t==='chat'?'':'none'; $('tuScn').style.display=t==='scn'?'':'none';
-    if(t==='chat'){ renderChat() } else { cancelTurn();if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
+    if(t==='chat'){ renderChat() } else { selection++;cancelTurn();if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
   }
-  function stop(){ if(callOn) endCall(); if(ex) endExam(); if(busy)cancelTurn();stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
+  function stop(){ selection++;if(callOn) endCall(); if(ex) endExam(); if(busy)cancelTurn();stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
   return{show,stop,send,_local:local,_state:()=>({msgs,model,state})};
 })();
 </script>
