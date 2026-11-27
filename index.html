@@ -722,6 +722,7 @@ img,svg,video{max-width:100%}
 .level-btn{padding:6px 9px;font-size:.76rem;white-space:nowrap}
 }
 </style>
+<script src="flow-experience.js" defer></script>
 </head>
 <body>
 
@@ -766,7 +767,7 @@ img,svg,video{max-width:100%}
       <span class="brand-icon">📘</span>
       <div>
         <div class="brand-text">EnglishFlow</div>
-        <div class="brand-sub">Изучай с нуля до C1 · v4.5.5</div>
+        <div class="brand-sub">Изучай с нуля до C1 · v4.6.0</div>
       </div>
     </div>
     <div class="nav-links">
@@ -1110,7 +1111,7 @@ img,svg,video{max-width:100%}
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal" style="max-width:400px">
-    <h2> Настройки · v4.5.5</h2>
+    <h2> Настройки · v4.6.0</h2>
     <div style="text-align:left;margin:20px 0;display:flex;flex-direction:column;gap:14px">
       <label style="display:flex;justify-content:space-between;align-items:center;font-weight:600">
         Цель слов в день
@@ -4410,7 +4411,7 @@ class App {
 document.addEventListener('DOMContentLoaded', () => new App());
 
 </script>
-<style>body:not(.lite) .sidebar{background:rgba(255,255,255,.66)!important;backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6)}body:not(.lite) .mobile-header{background:rgba(255,255,255,.66)!important;backdrop-filter:blur(14px) saturate(1.5);-webkit-backdrop-filter:blur(14px) saturate(1.5)}[data-theme=dark] body:not(.lite) .sidebar,[data-theme=dark] body:not(.lite) .mobile-header{background:rgba(18,18,24,.62)!important}</style>
+<style>body:not(.lite) .sidebar{backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6)}body:not(.lite) .mobile-header{backdrop-filter:blur(14px) saturate(1.5);-webkit-backdrop-filter:blur(14px) saturate(1.5)}</style>
 <style>
 #bgfx{position:fixed;inset:0;z-index:-1;pointer-events:none;contain:strict;background:linear-gradient(160deg,var(--g1,#fff1f6),var(--g2,#fde8f3));transition:background .6s}
 #bgc{position:absolute;inset:0;width:100%;height:100%}
@@ -4447,7 +4448,7 @@ button:active,.xo:active{transform:scale(.96)}
 .xg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #bkTabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}#bkTabs button{white-space:nowrap}
 .lite .sidebar,.lite .modal-overlay{backdrop-filter:none!important}
-#bgfx i{display:block!important;opacity:.24;animation-duration:85s!important}
+#bgfx i{display:block!important;opacity:.24;animation-duration:var(--flow-glow,85s)!important}
 #bgfx i:nth-of-type(1){background:radial-gradient(circle,var(--b1),transparent 65%)!important}
 #bgfx i:nth-of-type(2){background:radial-gradient(circle,var(--b2),transparent 65%)!important}
 #bgfx i:nth-of-type(3){background:radial-gradient(circle,var(--b3),transparent 65%)!important}
@@ -4468,7 +4469,7 @@ body[data-view]:not([data-view=dashboard]):not([data-view=flashcards]):not([data
 #up{position:fixed;right:16px;bottom:18px;width:46px;height:46px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);box-shadow:var(--shadow);display:grid;place-items:center;opacity:0;transform:translateY(10px) scale(.9);pointer-events:none;transition:opacity .25s,transform .25s;z-index:90;padding:0}
 #up.on{opacity:1;transform:none;pointer-events:auto}#up svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 #bgp{display:none;position:absolute;inset:-4%;background:center/cover no-repeat;will-change:transform}
-.sc-photo #bgp{display:block;animation:kb 50s ease-in-out infinite alternate}.sc-photo #bgc,.sc-photo #bgfx i{display:none!important}
+.sc-photo #bgp{display:block;animation:kb var(--flow-photo,50s) ease-in-out infinite alternate}.sc-photo #bgc,.sc-photo #bgfx i{display:none!important}
 .bg-still #bgp,.bg-hid #bgp{animation:none}@keyframes kb{to{transform:scale(1.1) translate(-1.5%,-1%)}}
 .sc-photo #bgfx::after{background:color-mix(in srgb,var(--bg) 42%,transparent)}
 #lkBg{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
@@ -4492,9 +4493,10 @@ function swap(root){if(!HAS.test(root.textContent||''))return;const w=document.c
  L.forEach(n=>{const v=n.nodeValue,f=document.createDocumentFragment();let l=0;v.replace(RE,(m,k,o)=>{f.append(v.slice(l,o));const[i,...c]=EM[k].split(' '),s=document.createElement('span');s.className='ic '+c.join(' ');s.innerHTML=`<svg><use href="#i-${i}"/></svg>`;f.append(s);l=o+m.length;return m});f.append(v.slice(l));n.replaceWith(f)})}
 let q=new Set(),qs=0;new MutationObserver(ms=>{ms.forEach(m=>m.addedNodes.forEach(n=>q.add(n.nodeType===3?n.parentNode:n)));if(!qs){qs=1;requestAnimationFrame(()=>{qs=0;const a=[...q];q.clear();a.forEach(n=>{if(n&&n.nodeType===1&&n.isConnected)swap(n)})})}}).observe(document.body,{childList:true,subtree:true});
 // ===== ФОН =====
-const SC={sakura:{n:'Сакура',l:['#fff1f6','#fde8f3'],d:['#24112b','#150a1f'],b:['#fb7185','#f9a8d4','#c084fc']},sunset:{n:'Закат',l:['#ffd9b8','#ffc2d4'],d:['#2b1738','#3b1d3d'],b:['#fb923c','#f472b6','#a78bfa']},night:{n:'Звёздная ночь',l:['#0f1536','#241552'],d:['#070a1f','#150e38'],dk:1,b:['#6366f1','#8b5cf6','#0ea5e9']},fireflies:{n:'Светлячки',l:['#0d2a22','#12362b'],d:['#06150f','#0b2118'],dk:1,b:['#16a34a','#65a30d','#0d9488']},rain:{n:'Дождь',l:['#e5ecf6','#cfdaeb'],d:['#0c1220','#141c2e'],b:['#38bdf8','#6366f1','#64748b']},snow:{n:'Снег',l:['#e8f1ff','#d9e6fb'],d:['#0d1424','#18233b'],b:['#93c5fd','#c4b5fd','#e0f2fe']},aurora:{n:'Аврора',l:['#eef2ff','#f5f3ff'],d:['#0c0c14','#13112a'],b:['#3b82f6','#8b5cf6','#14b8a6']}};
+const SC={sakura:{n:'Сакура',l:['#fff4ee','#efdefa'],d:['#23152e','#1c1428'],b:['#f97fa6','#f2b9da','#aa7cde']},sunset:{n:'Закат',l:['#ffd9b8','#ffc2d4'],d:['#2b1738','#3b1d3d'],b:['#fb923c','#f472b6','#a78bfa']},night:{n:'Звёздная ночь',l:['#0f1536','#241552'],d:['#070a1f','#150e38'],dk:1,b:['#6366f1','#8b5cf6','#0ea5e9']},fireflies:{n:'Светлячки',l:['#0d2a22','#12362b'],d:['#06150f','#0b2118'],dk:1,b:['#16a34a','#65a30d','#0d9488']},rain:{n:'Дождь',l:['#d7e8f0','#b3c7e0'],d:['#0b1925','#162942'],b:['#6dd6f9','#647bcb','#567188']},snow:{n:'Снег',l:['#e8f1ff','#d9e6fb'],d:['#0d1424','#18233b'],b:['#93c5fd','#c4b5fd','#e0f2fe']},aurora:{n:'Аврора',l:['#eef2ff','#f5f3ff'],d:['#0c0c14','#13112a'],b:['#3b82f6','#8b5cf6','#14b8a6']}};
 const COL=['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#e11d48','#ca8a04'];
-let L=Object.assign({bg:'sakura',anim:!matchMedia('(prefers-reduced-motion:reduce)').matches,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0},Storage.get('ef_look',{}));if(!SC[L.bg]&&L.bg!=='off')L.bg='sakura';
+let L=Object.assign({bg:'sakura',anim:!matchMedia('(prefers-reduced-motion:reduce)').matches,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0,panel:87},Storage.get('ef_look',{}));
+const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
 const cv=$('#bgc'),cx=cv.getContext('2d');let W,H,P=[],raf=0,tl=0,lite=L.q==='eco',spr,mo,pet,cl,sh=null;
 const sprite=c=>{const s=document.createElement('canvas');s.width=s.height=32;const g=s.getContext('2d'),r=g.createRadialGradient(16,16,0,16,16,16);r.addColorStop(0,c);r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,32,32);return s};
 const petal=()=>{const s=document.createElement('canvas');s.width=s.height=48;const g=s.getContext('2d');g.translate(24,24);const r=g.createRadialGradient(-4,-4,2,0,0,20);r.addColorStop(0,'#fff5f9');r.addColorStop(.6,'#ffb7d0');r.addColorStop(1,'#f472b6');g.fillStyle=r;g.beginPath();g.moveTo(0,-18);g.bezierCurveTo(16,-18,18,6,0,18);g.bezierCurveTo(-18,6,-16,-18,0,-18);g.fill();return s};
@@ -4521,18 +4523,23 @@ function spawn(){const f=(lite?.5:1)*(W<700?.6:1),n=({sakura:30,night:110,firefl
  if(L.bg==='fireflies')spr=sprite('rgba(255,236,120,1)');if(L.bg==='night')mo=sprite('rgba(255,244,210,.9)');if(L.bg==='sakura')pet=petal();if(L.bg==='snow')spr=sprite('rgba(255,255,255,1)');
  if(L.bg==='sunset'||L.bg==='mountains'){spr=sprite('rgba(255,190,120,1)');cl=cloud();P.forEach(p=>{p.w=160+p.s*220;p.y=Math.random()*H*.5})}if(L.bg==='galaxy')neb=[sprite('rgba(139,92,246,1)'),sprite('rgba(236,72,153,1)')]}
 function loop(t){raf=requestAnimationFrame(loop);if(t-tl<(lite?30:0))return;const dt=Math.min((t-tl)/16.7,3);tl=t;DR[L.bg](dt*L.sp,t*L.sp)}
-function start(){cancelAnimationFrame(raf);raf=0;if(!DR[L.bg])return;size();spawn();tl=performance.now();if(!L.anim||document.hidden){DR[L.bg](1,tl);return}raf=requestAnimationFrame(loop)}
-function grad(){const c=SC[L.bg]||SC.sakura,v=isDark()?c.d:c.l,s=$('#bgfx').style;s.setProperty('--g1',v[0]);s.setProperty('--g2',v[1]);c.b.forEach((x,i)=>s.setProperty('--b'+(i+1),x))}
+function start(){cancelAnimationFrame(raf);raf=0;if(!DR[L.bg]||!cx)return;size();spawn();tl=performance.now();if(!L.anim||reducedMotion.matches||document.hidden){DR[L.bg](0,0);return}raf=requestAnimationFrame(loop)}
+function grad(){const c=SC[L.bg]||SC.sakura,v=isDark()?c.d:c.l,s=$('#bgfx').style;
+ s.setProperty('--g1',v[0]);s.setProperty('--g2',v[1]);c.b.forEach((x,i)=>s.setProperty('--b'+(i+1),x));
+ const speed=Math.max(.2,Number(L.sp)||.6);
+ s.setProperty('--flow-glow',85/speed+'s');s.setProperty('--flow-photo',50/speed+'s');
+}
 const hex=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16));
 function look(){const r=document.documentElement.style,b=document.body.classList;const mc=$('.main-content');if(mc)mc.style.zoom=(L.fs||100)/100;[...b].filter(c=>c.startsWith('sc-')).forEach(c=>b.remove(c));b.add('sc-'+L.bg);b.toggle('bg-still',!L.anim);b.toggle('lite',lite);
- if(SC[L.bg]&&SC[L.bg].dk&&!isDark())$('#themeBtn').click();grad();$('#bgp').style.backgroundImage=L.bg==='photo'?'url('+(localStorage.getItem('ef_photo')||'')+')':'';
+ r.setProperty('--flow-panel',Math.max(65,Math.min(100,Number(L.panel)||87))+'%');grad();$('#bgp').style.backgroundImage=L.bg==='photo'?'url('+(localStorage.getItem('ef_photo')||'')+')':'';
  if(L.acc){const[a,g,d]=hex(L.acc);r.setProperty('--accent',L.acc);r.setProperty('--accent-dark','rgb('+[a,g,d].map(v=>v*.8|0)+')');r.setProperty('--accent-light','rgba('+a+','+g+','+d+',.16)')}else['--accent','--accent-dark','--accent-light'].forEach(k=>r.removeProperty(k));
  Storage.set('ef_look',L);start()}
 document.addEventListener('visibilitychange',()=>{document.body.classList.toggle('bg-hid',document.hidden);if(document.hidden){cancelAnimationFrame(raf);raf=0}else start()});
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(start,250)});
-const th=()=>{grad();if(SC[L.bg]&&SC[L.bg].dk&&!isDark()){L.bg='sakura';look()}};
+const th=()=>grad();
+reducedMotion.addEventListener('change',start);
 [document.documentElement,document.body].forEach(e=>new MutationObserver(th).observe(e,{attributes:true,attributeFilter:['data-theme']}));
-function probe(){let n=0,s=0,l=0;const f=t=>{if(n++)s+=t-l;l=t;if(n<45)requestAnimationFrame(f);else if(s/44>22){lite=true;look()}};requestAnimationFrame(f)}
+function probe(){let n=0,s=0,l=0;const f=t=>{if(n++)s+=t-l;l=t;if(n<45)requestAnimationFrame(f);else if(L.q==='auto'&&s/44>22){lite=true;look()}};requestAnimationFrame(f)}
 // ===== ДАННЫЕ УЧЕБНИКА =====
 const BK=[
 ['a breakthrough','breakthrough','[ˈbreɪkθruː]','прорыв','The new song was a real {breakthrough} for the band.','break + through: «сломать и пройти сквозь» → прорыв','Новая песня стала настоящим прорывом для группы.'],
@@ -4691,7 +4698,13 @@ async function imp(){const my=Storage.get('ef_custom',[]),need=[];$('#lkTx').val
  for(let i=0;i<need.length;i+=40){const ch=need.slice(i,i+40);try{const j=await(await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q='+encodeURIComponent(ch.map(x=>x.w).join('\n')))).json(),out=j[0].map(x=>x[0]).join('').split('\n');if(out.length>=ch.length)ch.forEach((x,k)=>x.r=(out[k]||'').trim())}catch(e){tip('Автоперевод недоступен, слова без перевода пропущены','error');break}}
  const ok=my.filter(x=>x.r);Storage.set('ef_custom',ok);$('#lkTx').value='';loadCustom();tip('В «Мой словарь»: '+ok.length+' слов')}
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-function init(){const a=A(),host=$('#view-list').parentNode,after=$('.nav-link[data-view=wordbox]');
+function init(){
+ for(const [id, [n, l1, l2, d1, d2, color]] of Object.entries(window.EFExperience?.scenes || {})){
+   SC[id]={n,l:[l1,l2],d:[d1,d2],b:[color,l2,d2]};
+   DR[id]=(_, time)=>EFExperience.paint(cx,id,W,H,time);
+ }
+ if(!Object.hasOwn(SC,L.bg)&&L.bg!=='off')L.bg='sakura';
+ const a=A(),host=$('#view-list').parentNode,after=$('.nav-link[data-view=wordbox]');
  const T=[['path','map','Путь: урок дня','Путь: урок дня','Готовый план на каждый день: слова, игры, диктант и перевод. Репетитор не нужен.','<div id="phBody"></div>',path],['book','music','Из учебника','Фразы из учебника','17 способов выучить слова с твоей страницы Word Box.','<div class="goal-text" id="bkPro"></div><div class="xk" id="bkTabs"></div><div id="bkBody"></div>',book],
   ['lesson','languages','Урок: перевод','Урок: русский → английский','Учитель говорит по-русски, ты пишешь перевод на английском.','<div id="lsBody"></div>',lesson],
   ['play','shapes','Игры','Игры со словами','Играй со всем словарём: виселица, мемори, свайп и другие.','<div class="xk" id="plTabs"></div><div id="plBody"></div>',play],
@@ -4700,10 +4713,10 @@ function init(){const a=A(),host=$('#view-list').parentNode,after=$('.nav-link[d
   ['sprint','zap','Спринт 60','Спринт 60 секунд','Выбери английское слово как можно быстрее. Ошибка отнимает 3 секунды.','<div id="spBody"></div>',sprint],
   ['build','blocks','Собери фразу','Собери фразу','Нажимай слова по порядку, чтобы собрать предложение.','<div id="bdBody"></div>',build],
   ['methods','bulb','Методы и план','Методы запоминания и план дня','Короткие приёмы и чек-лист на 10 минут.','<div id="mtBody"></div>',methods],
-  ['free','compass','Бесплатные ресурсы','Бесплатно и без репетитора','Проверенные бесплатные сайты и формула дня на 30 минут.',FREE,()=>{}]];
+  ['free','compass','Ресурсы','Ресурсы для английского','Подбери материалы по навыку и уровню и сохрани любимые.',FREE,()=>{}]];
  let prev=after;T.forEach(([id,i,nm,h,d,body])=>{const b=document.createElement('button');b.className='nav-link';b.dataset.view=id;b.innerHTML=I(i)+' '+nm+' <span class="badge-new">NEW</span>';prev.after(b);prev=b;b.onclick=()=>a.switchView(id);
   const s=document.createElement('section');s.className='view';s.id='view-'+id;s.innerHTML=`<h2 class="section-title">${h}</h2><p class="section-desc">${d}</p>`+body;host.appendChild(s)});
- const sv=a.switchView.bind(a);a.switchView=v=>{lsTok++;try{speechSynthesis.cancel()}catch(e){}if(window.__spT){clearInterval(window.__spT);window.__spT=0}sv(v);document.querySelectorAll('.view').forEach(x=>x.style.filter='');document.body.dataset.view=v;Storage.set('ef_last',v);window.__og&&window.__og(v);window.__vp&&window.__vp();const t=T.find(x=>x[0]===v);if(t)t[6]()};
+ const sv=a.switchView.bind(a);a.switchView=v=>{lsTok++;try{speechSynthesis.cancel()}catch(e){}if(window.__spT){clearInterval(window.__spT);window.__spT=0}sv(v);document.querySelectorAll('.view').forEach(x=>x.style.filter='');document.body.dataset.view=v;Storage.set('ef_last',v);window.__og&&window.__og(v);window.__vp&&window.__vp();const t=T.find(x=>x[0]===v);if(t)t[6]();if(v==='free')window.EFRes?.render()};
  $('#pbBody').onclick=e=>{const d=e.target.closest('[data-c],[data-h],.pbc');if(!d)return;if(d.dataset.c!=null){pbc=+d.dataset.c;phrasebook()}else if(d.dataset.h){pbh=!pbh;phrasebook()}else{const b=d.querySelector('b');b.style.filter='none';say(PB[pbc][1][d.dataset.i][0])}};
  $('#plTabs').onclick=e=>{const d=e.target.dataset;if(d.g)pgm=d.g;if(d.l)plv=d.l;if(d.g||d.l)play()};
  $('#bkTabs').onclick=e=>{if(e.target.dataset.m){bm=e.target.dataset.m;book()}};
@@ -4713,23 +4726,96 @@ function init(){const a=A(),host=$('#view-list').parentNode,after=$('.nav-link[d
  window.__og=v=>{const b=byV[v];if(b&&nl.classList.contains('more')){const r=b.getBoundingClientRect(),n=nl.getBoundingClientRect();if(r.bottom>n.bottom||r.top<n.top)b.scrollIntoView({block:'nearest'})}};
  const up=document.createElement('button');up.id='up';up.setAttribute('aria-label','Наверх');up.innerHTML='<svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>';up.onclick=()=>scrollTo({top:0,behavior:'smooth'});document.body.appendChild(up);addEventListener('scroll',()=>up.classList.toggle('on',scrollY>600),{passive:true});
  {const lv=Storage.get('ef_last',null);if(lv&&lv!=='dashboard'&&byV[lv])setTimeout(()=>a.switchView(lv),0)}
- const m=document.createElement('div');m.className='modal-overlay';m.innerHTML=`<div class="modal" style="max-height:88vh;overflow:auto"><h2>Оформление</h2><b>Живой фон</b><div class="xk" id="lkBg"></div><button class="xo" id="lkPh">Загрузить своё фото на фон</button><b>Цвет акцента</b><div class="xk" id="lkCol"></div><input type="color" id="lkPick" value="#2563eb"><b>Скорость фона</b><input type="range" id="lkSp" min="20" max="150" style="width:100%"><input type="range" id="lkMb" min="0" max="100" style="display:none"><b>Качество эффектов</b><div class="xk" id="lkQ"></div><div class="xk"><button id="lkAn"></button><button id="lkBl" style="display:none"></button><button id="lkRs">Сбросить</button></div><b>Комфорт: размер текста</b><input type="range" id="lkFs" min="90" max="130" style="width:100%"><div class="xk"><button id="lkHp"></button></div><b>Добавить слова</b><textarea class="xi" id="lkTx" rows="4" placeholder="Каждое слово с новой строки:&#10;apple - яблоко&#10;или просто: apple (переведу сам)"></textarea><button class="xo" id="lkImp">Добавить в словарь</button><button class="btn-primary" id="lkOk" style="width:100%">Готово</button></div>`;document.body.appendChild(m);
+ const m=document.createElement('div');m.className='modal-overlay';m.innerHTML=`<div class="modal" id="flowLookDialog" role="dialog" aria-modal="true" aria-labelledby="flowLookTitle" style="max-height:88vh;overflow:auto">
+   <h2 id="flowLookTitle">Оформление</h2><button class="xo" id="lkTheme" type="button">Сменить светлую или тёмную тему</button>
+   <h3>Живой фон</h3><div class="xk" id="lkBg"></div><button class="xo" id="lkPh">Загрузить своё фото</button>
+   <div class="xk"><button id="lkAn"></button><button id="lkRs">Сбросить оформление</button></div>
+   <label class="flow-slider">Скорость фона <input type="range" id="lkSp" min="20" max="150"></label>
+   <h3>Качество эффектов</h3><div class="xk" id="lkQ"></div>
+   <h3>Цвет акцента</h3><div class="xk" id="lkCol"></div><label>Свой цвет <input type="color" id="lkPick" value="#2563eb"></label>
+   <label class="flow-slider">Размер текста <input type="range" id="lkFs" min="90" max="130"></label>
+   <label class="flow-slider">Непрозрачность меню <input type="range" id="lkPanel" min="65" max="100"></label>
+   <section id="flowSoundPanel" aria-label="Фоновые звуки"></section>
+   <div class="xk"><button id="lkHp"></button></div>
+   <h3>Добавить слова</h3><textarea class="xi" id="lkTx" rows="4" aria-label="Новые слова" placeholder="Одно слово на строку: apple - яблоко"></textarea>
+   <button class="xo" id="lkImp">Добавить в словарь</button><button class="btn-primary" id="lkOk" style="width:100%">Готово</button></div>`;
+ document.body.appendChild(m);
+ const stopSound=window.EFExperience?.mountSound($('#flowSoundPanel'));
  const QN={auto:'Авто',max:'Максимум',eco:'Эко'};
- const draw=()=>{$('#lkBg').innerHTML=[...Object.keys(SC),'off'].map(k=>{const c=SC[k],ph=k==='photo'&&localStorage.getItem('ef_photo');return `<button data-b="${k}" class="tl ${L.bg===k?'on':''}" style="background:${ph?'url('+ph+')':k==='off'?'#475569':'linear-gradient(135deg,'+c.d[0]+','+c.b[0]+')'}">${k==='off'?'Без фона':c.n}</button>`}).join('');$('#lkCol').innerHTML=COL.map(c=>`<button class="sw ${L.acc===c?'on':''}" data-c="${c}" style="background:${c}"></button>`).join('');$('#lkQ').innerHTML=Object.keys(QN).map(k=>`<button data-q="${k}" class="${L.q===k?'on':''}">${QN[k]}</button>`).join('');$('#lkAn').textContent=L.anim?'Анимация: вкл':'Анимация: выкл';$('#lkBl').textContent=L.bl?'Motion blur: вкл':'Motion blur: выкл';$('#lkSp').value=L.sp*100;$('#lkFs').value=L.fs;$('#lkMb').value=L.mb;$('#lkHp').textContent=L.hp?'Вибрация при нажатии: вкл':'Вибрация при нажатии: выкл'};
- function pickPhoto(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);try{localStorage.setItem('ef_photo',c.toDataURL('image/jpeg',.72));L.bg='photo';look();draw()}catch(e){tip('Фото слишком большое для памяти браузера','error')}URL.revokeObjectURL(im.src)};im.src=URL.createObjectURL(f)};i.click()}
- m.onclick=e=>{const t=e.target;if(t.id==='lkPh'){pickPhoto();return}if(t===m||t.id==='lkOk')m.classList.remove('active');if(t.dataset.b){if(t.dataset.b==='photo'&&!localStorage.getItem('ef_photo')){pickPhoto();return}L.bg=t.dataset.b}if(t.dataset.c)L.acc=t.dataset.c;if(t.dataset.q){L.q=t.dataset.q;lite=L.q==='eco';if(L.q==='auto')setTimeout(probe,300)}if(t.id==='lkAn')L.anim=!L.anim;if(t.id==='lkBl')L.bl=!L.bl;if(t.id==='lkHp')L.hp=!L.hp;if(t.id==='lkImp'){imp();return}if(t.id==='lkRs')L={bg:'sakura',anim:true,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0};look();draw()};
- $('#lkSp').oninput=e=>{L.sp=e.target.value/100;Storage.set('ef_look',L)};
- $('#lkMb').oninput=e=>{L.mb=+e.target.value;Storage.set('ef_look',L)};
+ const draw=()=>{
+   $('#lkBg').innerHTML=[...Object.keys(SC),'off'].map(k=>{
+     const c=SC[k];
+     return `<button data-b="${k}" class="tl ${L.bg===k?'on':''}" aria-pressed="${L.bg===k}" style="background:${k==='off'?'#475569':'linear-gradient(135deg,'+c.d[0]+','+c.b[0]+')'}">${k==='off'?'Без фона':c.n}</button>`;
+   }).join('');
+   $('#lkCol').innerHTML=COL.map(c=>`<button class="sw ${L.acc===c?'on':''}" data-c="${c}" aria-label="Акцент ${c}" aria-pressed="${L.acc===c}" style="background:${c}"></button>`).join('');
+   $('#lkQ').innerHTML=Object.keys(QN).map(k=>`<button data-q="${k}" class="${L.q===k?'on':''}" aria-pressed="${L.q===k}">${QN[k]}</button>`).join('');
+   $('#lkAn').textContent=L.anim?'Анимация: вкл':'Анимация: выкл';
+   $('#lkAn').setAttribute('aria-pressed',String(L.anim));
+   $('#lkSp').value=L.sp*100;$('#lkFs').value=L.fs;$('#lkPanel').value=L.panel;$('#lkPick').value=L.acc||'#2563eb';
+   $('#lkHp').textContent=L.hp?'Вибрация: вкл':'Вибрация: выкл';
+ };
+ function pickPhoto(){
+   const i=document.createElement('input');i.type='file';i.accept='image/*';
+   i.onchange=()=>{
+     const f=i.files[0];if(!f)return;
+     const im=new Image(),url=URL.createObjectURL(f);
+     im.onerror=()=>{URL.revokeObjectURL(url);tip('Не удалось открыть изображение','error')};
+     im.onload=()=>{
+       try{
+         const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');
+         c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));
+         c.getContext('2d').drawImage(im,0,0,c.width,c.height);localStorage.setItem('ef_photo',c.toDataURL('image/jpeg',.72));
+         L.bg='photo';look();draw();
+       }catch(e){tip('Не удалось сохранить фото','error')}
+       finally{URL.revokeObjectURL(url)}
+     };
+     im.src=url;
+   };
+   i.click();
+ }
+ let opener;
+ const close=()=>{m.classList.remove('active');opener?.focus()};
+ const open=e=>{opener=e.currentTarget;draw();m.classList.add('active');$('#lkTheme').focus()};
+ m.onclick=e=>{
+   const t=e.target.closest('button')||e.target;
+   if(t===m||t.id==='lkOk'){close();return}
+   if(t.id==='lkTheme'){$('#themeBtn').click();return}
+   if(t.id==='lkPh'){pickPhoto();return}
+   if(t.id==='lkImp'){imp();return}
+   if(t.dataset.b){
+     if(t.dataset.b==='photo'&&!localStorage.getItem('ef_photo')){pickPhoto();return}
+     L.bg=t.dataset.b;
+   }else if(t.dataset.c)L.acc=t.dataset.c;
+   else if(t.dataset.q){L.q=t.dataset.q;lite=L.q==='eco';if(L.q==='auto')setTimeout(probe,300)}
+   else if(t.id==='lkAn')L.anim=!L.anim;
+   else if(t.id==='lkHp')L.hp=!L.hp;
+   else if(t.id==='lkRs'){L={bg:'sakura',anim:!reducedMotion.matches,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0,panel:87};lite=false;stopSound?.()}
+   else return;
+   look();draw();
+   for(const k of ['b','c','q'])if(t.dataset[k]){m.querySelector(`[data-${k}="${t.dataset[k]}"]`)?.focus({preventScroll:true});break}
+ };
+ m.onkeydown=e=>{
+   if(e.key==='Escape'){e.stopPropagation();close()}
+   if(e.key==='Tab'){
+     const focusable=[...m.querySelectorAll('button,input,select,textarea')].filter(el=>!el.disabled&&el.offsetWidth);
+     if(e.shiftKey&&document.activeElement===focusable[0]){e.preventDefault();focusable.at(-1)?.focus()}
+     else if(!e.shiftKey&&document.activeElement===focusable.at(-1)){e.preventDefault();focusable[0]?.focus()}
+   }
+ };
+ $('#lkSp').oninput=e=>{L.sp=e.target.value/100;grad();Storage.set('ef_look',L)};
  $('#lkFs').oninput=e=>{L.fs=+e.target.value;$('.main-content').style.zoom=L.fs/100;Storage.set('ef_look',L)};
+ $('#lkPanel').oninput=e=>{L.panel=+e.target.value;document.documentElement.style.setProperty('--flow-panel',L.panel+'%');Storage.set('ef_look',L)};
  $('#lkPick').oninput=e=>{L.acc=e.target.value;look();draw()};
- const bt=document.createElement('button');bt.className='btn-ghost';bt.innerHTML=I('palette')+' <span>Оформление</span>';bt.onclick=()=>{draw();m.classList.add('active')};$('#settingsBtn').before(bt);
+ const bt=document.createElement('button');bt.className='btn-ghost';bt.innerHTML=I('palette')+' <span>Оформление</span>';bt.onclick=open;$('#settingsBtn').before(bt);
  document.addEventListener('pointerdown',e=>{const b=e.target.closest('.xo,.btn-primary,.quiz-mode');if(!b)return;if(L.hp&&navigator.vibrate)navigator.vibrate(8);const r=b.getBoundingClientRect(),s=document.createElement('span'),d=Math.max(r.width,r.height)*2;s.className='rip';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),650)},{passive:true});
- const dv=$('#view-dashboard');if(dv){const c=document.createElement('div');c.className='xc';c.innerHTML='<h3 style="font-size:1.15rem">Урок дня</h3><small>Готовый план на 10–15 минут. Учишься сам, без репетитора.</small><button class="btn-primary" style="width:100%">Начать</button>';dv.prepend(c);c.querySelector('button').onclick=()=>a.switchView('path')}
+ const dv=$('#view-dashboard');
+ if(dv){
+   const c=document.createElement('div');c.className='xc flow-home';
+   c.innerHTML='<div><span class="flow-kicker">EnglishFlow · 4.6</span><h2>Английский в твоём ритме</h2><p>Начни с урока на 10–15 минут или выбери фон и звук для занятий.</p></div><div class="flow-actions"><button class="btn-primary" type="button">Урок дня</button><button class="xo" type="button">Оформление</button></div>';
+   dv.prepend(c);const [lesson,appearance]=c.querySelectorAll('button');lesson.onclick=()=>a.switchView('path');appearance.onclick=open;
+ }
+ window.EFExperience?.navigation(a);
  loadCustom();swap(document.body);look();
- document.body.insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="mbf" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur id="mbg" stdDeviation="0 0"/></filter><filter id="mbh" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur id="mbhg" stdDeviation="0 0"/></filter></svg>');
- window.__vp=()=>{return;const el=document.querySelector('.view.active'),g=document.getElementById('mbhg');if(!el||!g)return;const s=8*L.mb/100,t0=performance.now(),f=n=>{const k=Math.max(0,1-(n-t0)/400);g.setAttribute('stdDeviation',(s*k*k).toFixed(2)+' 0');el.style.filter=k>.05?'url(#mbh)':'';if(k>.05)requestAnimationFrame(f)};requestAnimationFrame(f)};
- let ly=scrollY,sb=0,sr=0,bq=0,bn=0;const mg=document.getElementById('mbg'),sbl=ts=>{const y=scrollY,v=Math.abs(y-ly);ly=y;const tg=0;sb+=(tg-sb)*(tg>sb?.55:.14);if(sb<.3)sb=0;const el=document.querySelector('.view.active');if(el){if(sb){mg.setAttribute('stdDeviation','0 '+sb.toFixed(2));el.style.filter='url(#mbf)'}else el.style.filter=''}
-  if(sb&&bq){if(ts-bq>34)bn++;else bn=Math.max(0,bn-1);if(bn>8){L.bl=false;sb=0;if(el)el.style.filter='';Storage.set('ef_look',L);tip('Motion blur выключен: сайт тормозил','error')}}bq=sb?ts:0;if(!sb)bn=0;sr=(sb||v>.5)?requestAnimationFrame(sbl):0};addEventListener('scroll',()=>{if(!sr)sr=requestAnimationFrame(sbl)},{passive:true});
  if(L.q==='auto')setTimeout(probe,1800);if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0));
 })();
@@ -4768,7 +4854,14 @@ window.EFVoice=(function(){
     return out;
   }
   let nat=null,natLoading=null,natCtx=null,natSrc=null,natCfg={voice:'af_heart',speed:1};
-  const eng=()=>{try{return Storage.get('ef_voice_engine','device')||'device'}catch(e){return 'device'}};
+  let nextAttempt=0;
+  function prepareAudio(){
+    try{
+      natCtx=natCtx||new (window.AudioContext||window.webkitAudioContext)();
+      if(natCtx.state==='suspended')natCtx.resume().catch(()=>{});
+    }catch(e){}
+  }
+  const eng=()=>{try{return Storage.get('ef_voice_engine','natural')||'natural'}catch(e){return 'natural'}};
   async function loadNatural(cb){
     if(nat) return nat; if(natLoading) return natLoading;
     natLoading=(async()=>{ try{
@@ -4777,21 +4870,41 @@ window.EFVoice=(function(){
       return nat }catch(e){ natLoading=null; throw e } })();
     return natLoading;
   }
-  function playRaw(a){ return new Promise(res=>{ try{
-    natCtx=natCtx||new (window.AudioContext||window.webkitAudioContext)(); if(natCtx.state==='suspended') natCtx.resume();
+  function playRaw(a){ return new Promise((res,reject)=>{ try{
+    if(!natCtx||natCtx.state!=='running')throw new Error('Audio unavailable');
     const d=a.audio, buf=natCtx.createBuffer(1,d.length,a.sampling_rate||24000); buf.copyToChannel(d,0);
-    const src=natCtx.createBufferSource(); src.buffer=buf; src.connect(natCtx.destination); natSrc=src; src.onended=()=>res(); src.start();
-  }catch(e){res()} }) }
-  async function natSpeak(text,opts){
-    const my=++token; try{syn&&syn.cancel()}catch(e){} try{natSrc&&natSrc.stop()}catch(e){}
-    const parts=split(text); if(!parts.length) return; const speed=(opts&&opts.rate)||natCfg.speed;
-    const gen=async t=>{ try{ return await nat.generate(t,{voice:natCfg.voice,speed}) }catch(e){ return await nat.generate(t,{voice:'af_heart',speed}) } };
-    let next=gen(parts[0]);
-    for(let i=0;i<parts.length;i++){ if(my!==token) return; const a=await next; if(i+1<parts.length) next=gen(parts[i+1]); if(my!==token) return; await playRaw(a); await new Promise(r=>setTimeout(r,120)) }
+    const src=natCtx.createBufferSource(); src.buffer=buf; src.connect(natCtx.destination); natSrc=src; src.onended=()=>{if(natSrc===src)natSrc=null;src.disconnect();res()}; src.start();
+  }catch(e){reject(e)} }) }
+  async function natSpeak(text,opts,my){
+    const parts=split(text);
+    const c=cfg(), speed=Math.min(1.5,Math.max(.5,(opts&&opts.rate)||c.rate||natCfg.speed));
+    const voice=c.accent==='en-GB'?'bf_emma':natCfg.voice;
+    for(const part of parts){
+      if(my!==token)return;
+      const audio=await nat.generate(part,{voice,speed});
+      if(my!==token)return;
+      await playRaw(audio);
+    }
   }
-  function speakAsync(text,lang,opts){
-    if(lang!=='ru'&&nat&&eng()==='natural') return natSpeak(text,opts).catch(()=>devSpeakAsync(text,lang,opts));
-    return devSpeakAsync(text,lang,opts);
+  async function speakAsync(text,lang,opts){
+    const c=cfg();
+    if(lang==='ru'||eng()!=='natural'||c.accent==='en-AU'||c.voiceName)return devSpeakAsync(text,lang,opts);
+    prepareAudio();
+    const my=++token;
+    try{syn?.cancel();natSrc?.stop()}catch(e){}
+    try{
+      if(!nat&&Date.now()>=nextAttempt){
+        const loading=loadNatural().catch(e=>{nextAttempt=Date.now()+60000;throw e});
+        // Keep an installed device voice responsive during the one-time download.
+        if(pick('en')){loading.catch(()=>{});return devSpeakAsync(text,lang,opts)}
+        let timer;
+        try{await Promise.race([loading,new Promise((_,reject)=>{timer=setTimeout(reject,15000)})])}
+        finally{clearTimeout(timer)}
+      }
+      if(my!==token)return;
+      if(nat) return await natSpeak(text,opts,my);
+    }catch(e){}
+    if(my===token)return devSpeakAsync(text,lang,opts);
   }
   function devSpeakAsync(text,lang,opts){
     return new Promise(res=>{
@@ -4799,10 +4912,10 @@ window.EFVoice=(function(){
       const my=++token; try{syn.resume()}catch(e){} try{syn.cancel()}catch(e){}
       const c=cfg(), ru=lang==='ru', v=pick(ru?'ru':'en',ru?null:c.voiceName), parts=split(text);
       const base=(opts&&opts.rate)||c.rate||0.92; let i=0, done=false;
-      const fin=()=>{if(!done){done=true;res()}};
-      setTimeout(fin,3000+String(text).length*140);
+      const fin=()=>{if(!done){done=true;clearTimeout(timeout);res()}};
+      const timeout=setTimeout(fin,3000+String(text).length*140);
       const next=()=>{
-        if(my!==token||i>=parts.length){fin();return}
+        if(done||my!==token||i>=parts.length){fin();return}
         const p=parts[i++], last=i===parts.length, u=new SpeechSynthesisUtterance(p);
         u.lang=v?norm(v.lang):(ru?'ru-RU':(c.accent||'en-US')); if(v)u.voice=v;
         u.rate=Math.max(.5,Math.min(1.4,ru?base+.05:base));
@@ -4816,15 +4929,18 @@ window.EFVoice=(function(){
   function speak(text,lang,opts){speakAsync(text,lang,opts)}
   function stop(){token++;try{syn&&syn.cancel()}catch(e){} try{natSrc&&natSrc.stop()}catch(e){}}
   if(syn){load(); try{syn.addEventListener('voiceschanged',load)}catch(e){}}
-  return{speak,speakAsync,stop,pick,score,split,loadNatural,isNatural:()=>!!nat,setNat:o=>Object.assign(natCfg,o),engine:eng,all:()=>{load();return voices.filter(isEn).sort((a,b)=>score(b,'en-US')-score(a,'en-US'))}};
+  return{speak,speakAsync,stop,pick,score,split,loadNatural,prepareAudio,isNatural:()=>!!nat,setNat:o=>Object.assign(natCfg,o),engine:eng,all:()=>{load();return voices.filter(isEn).sort((a,b)=>score(b,'en-US')-score(a,'en-US'))}};
 })();
 /* settings: nicer voice list + accent + test button */
 window.populateVoices=function(){
   const sel=document.getElementById('settingVoice'); if(!sel||!window.EFVoice) return;
   const cur=(function(){try{return Storage.getSettings().voiceName||''}catch(e){return ''}})();
-  sel.innerHTML='<option value="">Авто (лучший голос)</option>'+EFVoice.all().map(v=>{
-    const star=EFVoice.score(v,'')>=60?'★ ':''; const n=v.name.replace(/^Microsoft /,'').replace(/ Online \(Natural\)/,' (natural)');
-    return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+(v.name===cur?' selected':'')+'>'+star+n+' · '+String(v.lang).replace('_','-')+'</option>'}).join('');
+  sel.replaceChildren(new Option('Авто (лучший голос)',''));
+  for(const v of EFVoice.all()){
+    const star=EFVoice.score(v,'')>=60?'★ ':'';
+    const name=v.name.replace(/^Microsoft /,'').replace(/ Online \(Natural\)/,' (natural)');
+    sel.add(new Option(star+name+' · '+String(v.lang).replace('_','-'),v.name,false,v.name===cur));
+  }
 };
 (function(){
   const row=()=>{const sel=document.getElementById('settingVoice'); if(!sel||document.getElementById('settingAccent')) return;
@@ -4835,7 +4951,25 @@ window.populateVoices=function(){
     lab.parentNode.insertBefore(d,lab.nextSibling);
     const a=d.querySelector('#settingAccent'); a.value=cur;
     a.onchange=()=>{try{const s=Storage.getSettings(); s.accent=a.value; s.voiceName=''; Storage.setSettings(s)}catch(e){} sel.value=''; EFVoice.speak('Hello! This is how I sound. Nice to meet you.')};
-    d.querySelector('#voiceTest').onclick=()=>{try{const s=Storage.getSettings(); s.voiceName=sel.value; s.rate=parseFloat(document.getElementById('settingRate').value)||.9; Storage.setSettings(s)}catch(e){} EFVoice.speak('Hello! How are you today? I hope you are learning English with joy.')};
+    const engine=document.createElement('label');
+    engine.innerHTML='Тип озвучки <select id="flowVoiceEngine"><option value="natural">Естественная · английский</option><option value="device">Голос устройства</option></select>';
+    engine.style.cssText=lab.style.cssText;
+    d.after(engine);
+    const status=document.createElement('p');status.id='flowVoiceStatus';status.setAttribute('role','status');engine.after(status);
+    const eSel=engine.querySelector('select');
+    const sync=()=>{eSel.value=EFVoice.engine();status.textContent='Естественная озвучка загружается при первом использовании. Ручной выбор голоса и австралийский акцент используют голос устройства.'};
+    document.getElementById('settingsBtn').addEventListener('click',sync);
+    sync();
+    eSel.onchange=()=>{EFVoice.stop();Storage.set('ef_voice_engine',eSel.value)};
+    d.querySelector('#voiceTest').setAttribute('aria-label','Послушать пример произношения');
+    d.querySelector('#voiceTest').onclick=()=>{
+      const s=Storage.getSettings();s.accent=a.value;s.voiceName=sel.value;s.rate=parseFloat(document.getElementById('settingRate').value)||.9;Storage.setSettings(s);
+      if(eSel.value==='natural'&&!EFVoice.isNatural()&&!sel.value&&a.value!=='en-AU'){
+        status.textContent='Загружаю естественный голос. Пока может звучать голос устройства.';
+        EFVoice.loadNatural().then(()=>{status.textContent='Естественный голос готов.'},()=>{status.textContent='Не удалось загрузить модель. Будет использован голос устройства.'});
+      }
+      EFVoice.speak('Hello! How are you today? Let’s practice some English.');
+    };
   };
   if(document.readyState!=='loading') row(); else document.addEventListener('DOMContentLoaded',row);
   setTimeout(row,800);
@@ -4979,7 +5113,7 @@ window.EFPlace=(function(){
 <script>
 /* ===== EFRes: catalog of free resources ===== */
 window.EFRes=(function(){
-  const C=['Все','★ Мои','Грамматика','Аудирование','Чтение','Произношение','Словари','Практика','IELTS'];
+  const C=['Все','★ Мои','Грамматика','Аудирование','Чтение','Письмо','Произношение','Словари','Практика','IELTS'];
   const R=(n,u,c,l,k,w,h,t)=>({n,u,c,l,k,w,h,t});
   const L=[
     R('BBC Learning English','https://www.bbc.co.uk/learningenglish','Аудирование','A2–C1','free','Короткие уроки, «6 Minute English» с текстом, новости и лексика.','Слушай выпуск без текста, потом с текстом, выпиши 5 слов и повтори их вслух.'),
@@ -5008,14 +5142,35 @@ window.EFRes=(function(){
     R('IELTS — официальный сайт','https://ielts.org/','IELTS','B1–C2','free','Официальная информация: формат экзамена, критерии оценки, где сдать.','Начни отсюда, чтобы знать официальные требования.','off'),
     R('British Council IELTS','https://takeielts.britishcouncil.org/','IELTS','B1–C2','part','Официальный организатор экзамена: подготовка, пробные материалы. Часть бесплатная, часть платная.','Пройди пробный тест, чтобы понять формат и время.','off'),
     R('Cambridge English','https://www.cambridgeenglish.org/','IELTS','A2–C2','free','Информация о международных экзаменах Cambridge и пробные материалы.','Сравни экзамены и выбери подходящий по уровню.','off'),
-    R('IELTS Liz','https://ieltsliz.com/','IELTS','B1–C2','free','Бесплатные уроки и советы по Listening, Reading, Writing и Speaking. Это учебные рекомендации, а не официальные критерии.','Разбирай по одной части в день: Writing Task 2 и Speaking Part 2 самые сложные.','study')
+    R('IELTS Liz','https://ieltsliz.com/','IELTS','B1–C2','free','Бесплатные уроки и советы по Listening, Reading, Writing и Speaking. Это учебные рекомендации, а не официальные критерии.','Разбирай по одной части в день: Writing Task 2 и Speaking Part 2 самые сложные.','study'),
+    R('British Council — аудирование','https://learnenglish.britishcouncil.org/skills/listening','Аудирование','A1–C1','free','Диалоги и записи по уровням CEFR.','Сделай задания до и после прослушивания.'),
+    R('British Council — чтение','https://learnenglish.britishcouncil.org/skills/reading','Чтение','A1–C1','free','Тексты и интерактивные упражнения по уровням.','После чтения перескажи главную мысль.'),
+    R('British Council — письмо','https://learnenglish.britishcouncil.org/skills/writing','Письмо','A1–C1','free','Примеры писем, сообщений и эссе.','Напиши свой текст по образцу.'),
+    R('British Council — устная речь','https://learnenglish.britishcouncil.org/skills/speaking','Практика','A1–B2','free','Видео с фразами для повседневных ситуаций.','Поставь видео на паузу и ответь вслух.'),
+    R('Cambridge English — упражнения','https://www.cambridgeenglish.org/learning-english/activities-for-learners/','Практика','A1–C2','free','Короткие упражнения с фильтрами уровня и навыка.','Выбери упражнение на 5–10 минут.'),
+    R('Cambridge Write & Improve','https://writeandimprove.com/','Письмо','A1–C2','free','Задания с автоматической обратной связью.','Исправь текст по подсказкам и отправь ещё раз.'),
+    R('Purdue OWL','https://owl.purdue.edu/','Письмо','B2–C2','free','Руководства по академическому письму, стилю и пунктуации.','Сравни структуру и оформление со своим текстом.'),
+    R('BBC — Learning English YouTube','https://www.youtube.com/@bbclearningenglish','Аудирование','A2–C1','free','Короткие видео о лексике, грамматике и новостях.','Запиши три выражения и произнеси их вслух.'),
+    R('NPR Life Kit','https://www.npr.org/lifekit','Аудирование','B2–C2','free','Подкаст о повседневной жизни с живой речью.','Возьми короткий отрывок и перескажи его.'),
+    R('VOA — Let’s Learn English','https://learningenglish.voanews.com/p/5644.html','Практика','A1–A2','free','Видеокурс английского для начинающих.','Повтори диалог, затем разыграй обе роли.'),
+    R('Britannica Dictionary','https://www.britannica.com/dictionary','Словари','A2–C2','free','Определения и примеры для учащихся.','Составь своё предложение с новым словом.'),
+    R('Merriam-Webster','https://www.merriam-webster.com/','Словари','B1–C2','free','Определения, синонимы и примеры употребления.','Сохрани одно сочетание из примеров.'),
+    R('Standard Ebooks','https://standardebooks.org/','Чтение','B2–C2','free','Аккуратно изданная классика в электронных форматах.','Начни с короткого рассказа и читай по 10 минут.'),
+    R('LibriVox','https://librivox.org/','Аудирование','B2–C2','free','Бесплатные аудиокниги, начитанные волонтёрами.','Читай текст и одновременно слушай одну главу.'),
+    R('IELTS — примеры заданий','https://ielts.org/take-a-test/preparation-resources/sample-test-questions','IELTS','B1–C2','free','Образцы вопросов для Academic и General Training.','Выбери свой формат и выполни задание с таймером.','off')
   ];
   const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const favs=()=>{try{return Storage.get('ef_res_fav',[])||[]}catch(e){return[]}};
-  let cat='Все',q='';
+  const levels=['A1','A2','B1','B2','C1','C2'];
+  let cat='Все',q='',level='',access='';
+  const forLevel=(r,wanted)=>{
+    const [a,b]=r.l.match(/[ABC][12]/g)||[];
+    const i=levels.indexOf(wanted);
+    return !wanted || i>=levels.indexOf(a)&&i<=levels.indexOf(b||(r.l.endsWith('+')?'C2':a));
+  };
   function card(r){
     const f=favs().includes(r.u), cost={free:['Бесплатно','rs-free'],part:['Частично платно','rs-part']}[r.k];
-    return '<div class="rs-card"><div class="rs-top"><div class="rs-name">'+esc(r.n)+'</div><button class="rs-star'+(f?' on':'')+'" data-u="'+esc(r.u)+'" aria-label="В закладки">'+(f?'★':'☆')+'</button></div>'
+    return '<div class="rs-card"><div class="rs-top"><div class="rs-name">'+esc(r.n)+'</div><button class="rs-star'+(f?' on':'')+'" data-u="'+esc(r.u)+'" aria-label="'+(f?'Убрать из закладок: ':'Сохранить: ')+esc(r.n)+'" aria-pressed="'+f+'">'+(f?'★':'☆')+'</button></div>'
       +'<div class="rs-what">'+esc(r.w)+'</div><div class="rs-tags"><span class="rs-tag">'+esc(r.c)+'</span><span class="rs-tag">'+esc(r.l)+'</span><span class="rs-tag '+cost[1]+'">'+cost[0]+'</span>'
       +(r.t==='off'?'<span class="rs-tag rs-off">Официальный источник</span>':r.t==='study'?'<span class="rs-tag">Учебные рекомендации</span>':'')+'</div>'
       +'<details class="rs-how"><summary>Как использовать</summary><div style="margin-top:6px">'+esc(r.h)+'</div></details>'
@@ -5024,8 +5179,9 @@ window.EFRes=(function(){
   function draw(){
     const box=document.getElementById('resCatalog'); if(!box) return;
     const fv=favs(), ql=q.toLowerCase();
-    const items=L.filter(r=>(cat==='Все'||(cat==='★ Мои'?fv.includes(r.u):r.c===cat))&&(!ql||(r.n+' '+r.w+' '+r.c).toLowerCase().includes(ql)));
-    box.querySelector('.rs-bar').innerHTML=C.map(c=>'<button class="rs-chip'+(c===cat?' on':'')+'" data-c="'+c+'">'+c+'</button>').join('');
+    const items=L.filter(r=>(cat==='Все'||(cat==='★ Мои'?fv.includes(r.u):r.c===cat))&&(!ql||(r.n+' '+r.w+' '+r.c).toLowerCase().includes(ql))&&forLevel(r,level)&&(!access||access===r.k));
+    box.querySelector('#rsCount').textContent='Найдено: '+items.length+' из '+L.length;
+    box.querySelector('.rs-bar').innerHTML=C.map(c=>'<button class="rs-chip'+(c===cat?' on':'')+'" data-c="'+c+'" aria-pressed="'+(c===cat)+'">'+c+'</button>').join('');
     box.querySelector('#rsList').innerHTML=items.length?items.map(card).join(''):'<p style="color:var(--text-secondary);text-align:center;padding:20px">'+(cat==='★ Мои'?'Пока нет закладок. Нажми ☆ у ресурса.':'Ничего не найдено.')+'</p>';
   }
   function render(){
@@ -5033,9 +5189,11 @@ window.EFRes=(function(){
     v.querySelectorAll('a.xc').forEach(a=>a.remove());
     if(!document.getElementById('resCatalog')){
       const d=document.createElement('div'); d.id='resCatalog';
-      d.innerHTML='<input class="rs-search" id="rsQ" type="search" placeholder="Поиск: grammar, BBC, IELTS…"><div class="rs-bar"></div><div id="rsList"></div><p class="rs-note">Ссылки ведут на внешние сайты. Условия и доступность могут меняться, платные функции помечены. Учебные рекомендации не заменяют официальные критерии экзаменов.</p>';
+      d.innerHTML='<input class="rs-search" id="rsQ" type="search" aria-label="Поиск ресурсов" placeholder="Поиск: grammar, BBC, IELTS…"><div class="rs-bar"></div><div class="flow-filter"><label>Уровень <select id="rsLevel"><option value="">Все уровни</option>'+levels.map(l=>'<option>'+l+'</option>').join('')+'</select></label><label>Доступ <select id="rsAccess"><option value="">Любой</option><option value="free">Бесплатно</option><option value="part">Частично платно</option></select></label></div><p id="rsCount" role="status"></p><div id="rsList"></div><p class="rs-note">Ссылки ведут на внешние сайты. Условия и доступность могут меняться, платные функции помечены. Учебные рекомендации не заменяют официальные критерии экзаменов.</p>';
       v.appendChild(d);
       d.querySelector('#rsQ').oninput=e=>{q=e.target.value.trim();draw()};
+      d.querySelector('#rsLevel').onchange=e=>{level=e.target.value;draw()};
+      d.querySelector('#rsAccess').onchange=e=>{access=e.target.value;draw()};
       d.addEventListener('click',e=>{
         const c=e.target.closest('.rs-chip'); if(c){cat=c.dataset.c;draw();return}
         const st=e.target.closest('.rs-star'); if(st){let f=favs(); const u=st.dataset.u; f=f.includes(u)?f.filter(x=>x!==u):f.concat(u); try{Storage.set('ef_res_fav',f)}catch(x){} draw()}
@@ -5043,7 +5201,6 @@ window.EFRes=(function(){
     }
     draw();
   }
-  const hook=setInterval(()=>{const A=window.__app; if(A){clearInterval(hook); const o=A.switchView.bind(A); A.switchView=function(v){const r=o(v); if(v==='free') render(); return r}}},100);
   return{render,count:()=>L.length};
 })();
 </script>
@@ -5159,11 +5316,16 @@ window.EFTutor=(function(){
     if(!ref||!pron||!A||!window.__og) return false;
     const sec=document.createElement('section'); sec.className='view'; sec.id='view-tutor'; ref.parentNode.appendChild(sec);
     const b=document.createElement('button'); b.className='nav-link'; b.dataset.view='tutor'; b.innerHTML='<svg class="nav-svg"><use href="#i-mic"/></svg> Репетитор';
-    pron.parentNode.insertBefore(b,pron.nextSibling); b.addEventListener('click',()=>A.switchView('tutor'));
+    (pron.closest('.flow-nav-row')||pron).after(b); b.addEventListener('click',()=>A.switchView('tutor'));
     const o=A.switchView.bind(A); A.switchView=function(v){const r=o(v); if(v==='tutor'){window.EFChat?EFChat.show():menu()} else {stop(); window.EFChat&&EFChat.stop()} return r};
     return true;
   }
-  const t0=Date.now(), hook=setInterval(()=>{if(mount()||Date.now()-t0>10000) clearInterval(hook)},150);
+  const t0=Date.now(), hook=setInterval(()=>{
+    if(mount()){
+      clearInterval(hook);
+      if(Storage.get('ef_last')==='tutor'&&window.__app.currentView==='dashboard')window.__app.switchView('tutor');
+    }else if(Date.now()-t0>10000)clearInterval(hook);
+  },150);
   return{menu,start,_norm:norm,_sc:SC};
 })();
 </script>
@@ -5208,20 +5370,19 @@ body.tu-on #up{display:none!important}
 </style>
 <script>
 /* ===== EFChat: free-form AI tutor (Gemini via user's own key) + offline lookup ===== */
-/* Owner config: URL of your own AI proxy (see ai-proxy-worker.js). Leave empty to use free public sources. */
+/* Optional owner configuration: URL of an AI proxy (see ai-proxy-worker.js). */
 window.EF_AI_PROXY=window.EF_AI_PROXY||'';
-/* Optional: a Gemini key restricted to your site's domain in Google Cloud (Website restrictions). Leave empty to use free public sources. */
-window.EF_GEMINI_KEY=window.EF_GEMINI_KEY||'';
 window.EFChat=(function(){
   const KEY='ef_ai_key', MODELS=['gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite'];
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const LAB={idle:'Готов',listening:'Слушаю…',thinking:'Думаю…',speaking:'Говорю…'};
   const CHIPS=['Давай поговорим по-английски','Как сказать «я опаздываю»?','Исправь: I goed to school yesterday','Объясни Present Perfect просто','IELTS Speaking Part 1: задай вопрос'];
-  let msgs=[],state='idle',lang='en-US',voiceOn=true,model=null,rec=null,busy=false,tab='chat',setup=false,spTok=0,explain='en',callOn=false,callFail=0,callT0=0,callTimer=0,ex=null,holdAt=0,spaceDown=false;
+  let practiceState={}, turn=0, dismissRequest=null;
+  let msgs=[],state='idle',lang='en-US',voiceOn=Storage.get('ef_tutor_voice',true),model=null,rec=null,busy=false,tab='chat',setup=false,spTok=0,explain='en',callOn=false,callFail=0,callT0=0,callTimer=0,ex=null,holdAt=0,spaceDown=false;
   let persona='angry',kind='flow'; try{persona=Storage.get('ef_ai_mood','angry')||'angry'; kind=Storage.get('ef_ai_kind','flow')||'flow'}catch(e){} if(!['angry','normal','kind'].includes(persona)) persona='angry'; if(!['flow','fox','owl'].includes(kind)) kind='flow';
   const $=id=>document.getElementById(id);
   const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const getKey=()=>{let k=''; try{k=Storage.get(KEY,'')||''}catch(e){} return k||window.EF_GEMINI_KEY||''};
+  const getKey=()=>{let k=''; try{k=Storage.get(KEY,'')||''}catch(e){} return k};
   const setKey=k=>{try{Storage.set(KEY,k)}catch(e){}};
   const level=()=>{try{const h=Storage.get('ef_place_hist',[]);const m=h&&h[0]&&String(h[0].name).match(/^(Pre-A1|[ABC][12])/);return m?m[1]:'A2'}catch(e){return 'A2'}};
   const MIC='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
@@ -5270,6 +5431,7 @@ window.EFChat=(function(){
   }
   function stopSp(){spTok++; try{EFVoice.stop()}catch(e){}}
   async function speak(text,cb){
+    EFVoice.prepareAudio();
     const my=++spTok; const lines=ttsText(text).split(/\n+/).map(l=>l.trim()).filter(Boolean);
     setState('speaking');
     const segs=[]; lines.forEach(l=>{ const runs=l.match(/[А-Яа-яЁё][^A-Za-z]*|[A-Za-z][^А-Яа-яЁё]*/g)||[l];
@@ -5277,14 +5439,19 @@ window.EFChat=(function(){
     for(const g of segs){ if(my!==spTok) return; if(!/[A-Za-zА-Яа-яЁё0-9]/.test(g.t)) continue; try{await EFVoice.speakAsync(g.t.trim(),g.ru?'ru':'en')}catch(e){} }
     if(my===spTok){ if(state==='speaking') setState('idle'); if(cb) cb(); else if(callOn) setTimeout(()=>{ if(callOn&&state==='idle'&&!busy) listen() },450) }
   }
-  const getProv=()=>{try{const p=Storage.get('ef_ai_prov','')||''; return p||(getKey()?'gemini':'auto')}catch(e){return 'auto'}};
+  const getProv=()=>{
+    const p=Storage.get('ef_ai_prov','');
+    if(p==='local'||p==='puter'||p==='gemini') return p;
+    if(p==='proxy') return window.EF_AI_PROXY?'proxy':'local';
+    return getKey()?'gemini':'local';
+  };
   const setProv=p=>{try{Storage.set('ef_ai_prov',p)}catch(e){}};
-  const provName=()=>({auto:'авто',puter:'Puter',poll:'без регистрации',gemini:'Gemini'}[getProv()]||'');
-  const PUTER_MODELS=['gpt-5.4-nano','gpt-5-nano','gpt-4o-mini']; let puterP=null;
-  async function callGemini(list,sys){
+  const provName=()=>({local:'встроенная практика',puter:'Puter',gemini:'Gemini',proxy:'сервис сайта'}[getProv()]);
+  const PUTER_MODELS=['gpt-5-nano','gpt-4o-mini']; let puterP=null;
+  async function callGemini(list,sys,signal){
     const contents=list.map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.text}]})); let last=null;
-    for(const m of (model?[model]:MODELS)){
-      let r; try{ r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(getKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{temperature:.7,maxOutputTokens:500}})}); }catch(e){ throw {code:'net'} }
+    for(const m of (model?[model,...MODELS.filter(m=>m!==model)]:MODELS)){
+      let r; try{ r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':getKey()},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{temperature:.7,maxOutputTokens:500}})}); }catch(e){ throw {code:'net'} }
       if(r.status===404){last={code:404};model=null;continue}
       if(!r.ok){let j={}; try{j=await r.json()}catch(e){} throw {code:r.status,msg:(j.error&&j.error.message)||''}}
       const j=await r.json(); const p=(((j.candidates||[])[0]||{}).content||{}).parts; const txt=p?p.map(x=>x.text||'').join('').trim():'';
@@ -5293,13 +5460,20 @@ window.EFChat=(function(){
     throw last||{code:404};
   }
   function loadPuter(){
-    if(window.puter) return Promise.resolve(); if(puterP) return puterP;
-    puterP=new Promise((res,rej)=>{const s=document.createElement('script'); s.src='https://js.puter.com/v2/'; s.onload=()=>res(); s.onerror=()=>{puterP=null;rej({code:'puter-load'})}; document.head.appendChild(s)});
+    if(window.puter?.ai&&window.puter?.auth) return Promise.resolve(); if(puterP) return puterP;
+    puterP=new Promise((res,rej)=>{
+      const s=document.createElement('script'); s.src='https://js.puter.com/v2/';
+      const fail=()=>{clearTimeout(timeout);s.remove();puterP=null;rej({code:'puter-load'})};
+      const timeout=setTimeout(fail,9000);
+      s.onload=()=>{clearTimeout(timeout);if(window.puter?.ai&&window.puter?.auth)res();else fail()};
+      s.onerror=fail;document.head.appendChild(s);
+    });
     return puterP;
   }
-  async function callPuter(list,sys){
+  async function callPuter(list,sys,signal){
     await loadPuter(); const ms=[{role:'system',content:sys}].concat(list.map(x=>({role:x.role,content:x.text}))); let last=null;
     for(const m of PUTER_MODELS){
+      if(signal.aborted) throw {code:'timeout'};
       try{
         const r=await window.puter.ai.chat(ms,{model:m}); const c=r&&r.message&&r.message.content;
         const t=(typeof c==='string'?c:Array.isArray(c)?c.map(x=>x.text||'').join(''):(r&&r.toString?String(r):'')).trim();
@@ -5313,64 +5487,72 @@ window.EFChat=(function(){
     }
     throw last||{code:'puter'};
   }
-  async function callProxy(list,sys){
-    const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),25000);
-    try{
-      const r=await fetch(window.EF_AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,body:JSON.stringify({system:sys,messages:list})});
-      if(!r.ok) throw {code:r.status===429?429:'poll'}; const j=await r.json(); if(!j.text) throw {code:'empty'}; return String(j.text).trim();
-    }catch(e){ if(e&&e.code) throw e; throw {code:'net'} } finally{ clearTimeout(to) }
-  }
-  async function callPoll(list,sys){
-    let last=null;
-    for(let a=0;a<3;a++){
-      if(a) await new Promise(r=>setTimeout(r,a===1?4000:9000));
-      const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),20000);
-      try{
-        const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,body:JSON.stringify({model:'openai',max_tokens:500,messages:[{role:'system',content:sys}].concat(list.slice(-8).map(x=>({role:x.role,content:x.text})))})});
-        if(!r.ok){ last={code:r.status===429?429:'poll',http:r.status}; if([401,402,403].includes(r.status)) throw last; continue }
-        const raw=await r.text(); let j=null; try{j=JSON.parse(raw)}catch(e){}
-        const t=j?(((j.choices||[])[0]||{}).message||{}).content:(raw&&raw[0]!=='{'?raw:'');
-        if(!t){ last={code:'empty'}; continue } return String(t).trim();
-      }catch(e){ if(e&&e.http&&[401,402,403].includes(e.http)) throw e; if(!(e&&e.code)) last={code:'net'} }
-      finally{ clearTimeout(to) }
-    }
-    throw last||{code:'net'};
+  async function callProxy(list,sys,signal){
+    const r=await fetch(window.EF_AI_PROXY,{method:'POST',headers:{'Content-Type':'application/json'},signal,body:JSON.stringify({system:sys,messages:list})});
+    if(!r.ok) throw {code:r.status}; const j=await r.json();
+    if(typeof j.text!=='string'||!j.text.trim()) throw {code:'empty'};
+    return j.text.trim();
   }
   async function ask(list,sys,opt){
-    const p=getProv(); const fn={puter:callPuter,poll:callPoll,gemini:callGemini,proxy:callProxy}, px=window.EF_AI_PROXY?['proxy']:[];
-    let order=opt&&opt.only?[opt.only]:(p==='puter'?px.concat(['puter','poll']):p==='poll'?['poll']:p==='gemini'?['gemini','poll']:px.concat(['poll']));
-    if(!(opt&&opt.only)&&getKey()&&!order.includes('gemini')) order.push('gemini');
-    let err=null; for(const k of order){ try{ return await fn[k](list,sys) }catch(e){ err=e } }
-    throw err||{code:'net'};
+    const provider=opt?.only||getProv(), call={puter:callPuter,gemini:callGemini,proxy:callProxy}[provider];
+    if(!call) throw {code:'local'};
+    const controller=new AbortController();
+    let timer, cancel;
+    const deadline=new Promise((_,reject)=>{
+      cancel=code=>{reject({code});controller.abort()};
+      timer=setTimeout(()=>cancel('timeout'),18000);
+    });
+    if(opt?.chat) dismissRequest=()=>cancel('cancelled');
+    try { return await Promise.race([call(list,sys,controller.signal),deadline]); }
+    finally { clearTimeout(timer);if(opt?.chat)dismissRequest=null; }
   }
   function friendly(e){
     const c=e&&e.code, m=String((e&&e.msg)||'');
+    if(c==='timeout') return 'Источник ИИ не ответил вовремя.';
+    if(c==='local') return 'Для разбора подключи источник ИИ.';
+    if(c===429||c===402||c==='puter-limit') return 'Лимит выбранного сервиса ИИ исчерпан. Можно продолжить встроенную практику.';
     if(c==='puter-cancel') return 'Вход в Puter отменён. Нажми кнопку ещё раз и войди в бесплатный аккаунт.';
     if(c==='puter-load') return 'Не удалось загрузить Puter. Проверь интернет или выбери другой источник.';
-    if(c==='puter-limit') return 'Бесплатный месячный лимит Puter закончился. Выбери «Без регистрации» или свой ключ Gemini.';
     if(c==='net') return 'Нет связи с сервисом ИИ. Проверь интернет или VPN. Если ошибка повторяется, выбери другой источник.';
     if((c===400||c===403)&&/key|api/i.test(m)) return 'Ключ не подходит. Проверь его в настройке ИИ.';
-    if(c==='poll'||c===429) return 'Бесплатный сервис ИИ сейчас занят или недоступен'+(e&&e.http?' (код '+e.http+')':'')+'. Подожди минуту или подключи Puter кнопкой ниже.';
+    if(c===401||c===403) return 'Сервис ИИ не принял данные для входа. Проверь настройки источника.';
     if(c===404) return 'Модель недоступна. Выбери другой источник ИИ.';
     if(c==='empty') return 'ИИ не вернул ответ. Попробуй переформулировать.';
     return 'Ошибка ИИ'+(c?' ('+c+')':'')+'. Попробуй ещё раз или выбери другой источник.';
   }
   function local(q){
-    const m=q.match(/(?:как сказать|как будет|переведи|перевод)\s*[:\-]?\s*[«"']?(.+?)[»"'?!.]*$/i); const x=(m?m[1]:q).trim().toLowerCase(); if(!x) return null;
-    const out=[]; try{ (typeof VOCAB_DATA!=='undefined'?VOCAB_DATA:[]).forEach(c=>c.words.forEach(w=>{ if(out.length<4&&(String(w.ru).toLowerCase().includes(x)||String(w.word).toLowerCase()===x)) out.push(w)})) }catch(e){}
-    if(!out.length) return 'В словаре без ИИ я этого не нашёл. Подключи ИИ кнопкой «Подключить ИИ» (ключ не нужен), и я отвечу на любой вопрос и поддержу разговор. А пока можно потренироваться в разделе «Сценарии».';
-    return out.map(w=>'**'+w.word+'** '+(w.trans||'')+' — '+w.ru+(w.ex?'\nПример: '+w.ex:'')).join('\n\n');
+    return EFExperience.practice(q,practiceState,x=>{
+      if(!x)return null;
+      const words=typeof ALL_WORDS!=='undefined'?ALL_WORDS:[];
+      const results=words.filter(w=>String(w.word).toLowerCase()===x||String(w.translation).toLowerCase().includes(x)).slice(0,4);
+      return results.length?results.map(w=>'**'+w.word+'** — '+w.translation+(w.example?'\nПример: '+w.example:'')).join('\n\n'):null;
+    });
+  }
+  function cancelTurn(){
+    turn++;dismissRequest?.();dismissRequest=null;busy=false;setState('idle');
   }
   async function send(text){
-    text=String(text||'').trim(); if(!text||busy) return; if(ex){ stopSp(); if(!ex.long) addMsg('me',text); examAnswer(text); return } stopSp(); busy=true; addMsg('me',text); setState('thinking'); let reply=null;
+    text=String(text||'').trim();if(!text||busy)return;
+    if(ex){stopSp();if(!ex.long)addMsg('me',text);examAnswer(text);return}
+    const id=++turn;
+    stopSp();if(voiceOn)EFVoice.prepareAudio();busy=true;addMsg('me',text);setState('thinking');
+    let reply, fallback=false;
     try{
-      if(getProv()){
-        const list=msgs.filter(x=>x.r!=='err').slice(-12).map(x=>({role:x.r==='ai'?'assistant':'user',text:x.t}));
-        reply=await ask(list,SYS());
-      } else { await new Promise(r=>setTimeout(r,500)); reply=local(text)||'Подключи ИИ кнопкой «Подключить ИИ», чтобы мы могли разговаривать.' }
-      setState('idle'); addMsg('ai',reply); if(voiceOn) speak(reply);
-    }catch(e){ setState('idle'); addMsg('err',friendly(e)); const c=e&&e.code; if((c==='poll'||c===429||c==='net')&&getProv()!=='puter'){ const log=$('aiLog'), last=log&&log.lastElementChild; if(last){ const b=document.createElement('button'); b.className='ai-go'; b.textContent='Подключить Puter (бесплатный вход)'; b.onclick=()=>quickPuter(b); last.appendChild(b) } } }
-    busy=false; const i=$('aiIn'); if(i) i.focus({preventScroll:true});
+      if(getProv()==='local'){reply=local(text);fallback=true}
+      else{
+        const list=msgs.filter(x=>x.r!=='err'&&!x.local).slice(-12).map(x=>({role:x.r==='ai'?'assistant':'user',text:x.t}));
+        reply=await ask(list,SYS(),{chat:true});
+      }
+    }catch(e){
+      if(id!==turn)return;
+      addMsg('err',friendly(e)+' Перехожу к встроенной практике.');
+      reply=local(text);fallback=true;
+    }finally{if(id===turn)busy=false}
+    if(id!==turn)return;
+    setState('idle');addMsg('ai',reply);
+    if(fallback&&msgs.length)msgs.at(-1).local=true;
+    if(voiceOn)speak(reply);
+    $('aiIn')?.focus({preventScroll:true});
   }
   const micMsg=c=>({'not-allowed':'Нет доступа к микрофону. Нажми на значок замка в адресной строке, затем «Разрешения», «Микрофон», «Разрешить». Можно также диктовать клавиатурой: значок микрофона на клавиатуре Gboard.','service-not-allowed':'Браузер не разрешил распознавание речи. Проверь разрешение для микрофона или диктуй клавиатурой (значок микрофона на Gboard).','no-speech':'Я не услышал речь. Нажми на микрофон и говори сразу после того, как шар станет красным. Проверь, что выбран нужный язык: English или Русский.','audio-capture':'Микрофон не найден или занят другим приложением. Закрой другие приложения с записью звука.','network':'Распознавание речи в Chrome работает через интернет. Проверь подключение.','language-not-supported':'Для этого языка нет распознавания в твоём браузере. Переключи язык кнопкой English / Русский.','aborted':''}[c]||'Не удалось распознать речь ('+(c||'ошибка')+'). Попробуй ещё раз или диктуй клавиатурой.');
   function listen(){
@@ -5390,33 +5572,45 @@ window.EFChat=(function(){
     try{rec.start(); setState('listening')}catch(e){setState('idle'); addMsg('err',micMsg('audio-capture'))}
   }
   const OKQ=[{role:'user',text:'Reply with the single word OK'}];
-  async function quickPuter(btn){
-    btn.disabled=true; btn.textContent='Открываю вход…';
-    try{ await ask(OKQ,'You are a test.',{only:'puter'}); setProv('puter'); btn.remove(); addMsg('err','Puter подключён. Напиши сообщение ещё раз.') }
-    catch(e){ btn.disabled=false; btn.textContent='Подключить Puter (бесплатный вход)'; addMsg('err',friendly(e)) }
-  }
   async function choose(p){
-    const st=$('aiKeySt');
-    if(p==='auto'){ setProv('auto'); setup=false; renderChat(); return }
+    if(p==='local'){cancelTurn();setProv('local');setup=false;renderChat();return}
     if(p==='gemini'){ $('aiKeyBox').style.display='flex'; $('aiKey').focus(); return }
+    const st=$('aiKeySt'), buttons=Array.from(document.querySelectorAll('.ai-opt'));
+    buttons.forEach(b=>b.disabled=true);
     st.textContent=p==='puter'?'Открываю вход в Puter…':'Проверяю подключение…';
-    try{ await ask(OKQ,'You are a test.',{only:p}); setProv(p); setup=false; st.textContent='ИИ подключён.'; setTimeout(renderChat,500) }
-    catch(e){ st.textContent=friendly(e) }
+    try{
+      if(p==='puter'){
+        if(!window.puter){
+          await loadPuter();
+          st.textContent='Puter готов. Нажми Puter ещё раз, чтобы открыть окно входа.';
+          return;
+        }
+        if(!window.puter.auth.isSignedIn())await window.puter.auth.signIn();
+      }
+      await ask(OKQ,'You are a test.',{only:p});
+      if(!st.isConnected)return;
+      cancelTurn();setProv(p);setup=false;renderChat();
+    }catch(e){st.textContent=e?.code?friendly(e):'Вход не завершён. Разреши всплывающие окна и попробуй ещё раз.'}
+    finally{buttons.forEach(b=>b.disabled=false)}
   }
   async function saveKey(){
-    const k=($('aiKey').value||'').trim(); const st=$('aiKeySt'); if(!k) return; setKey(k); model=null; st.textContent='Проверяю ключ…';
-    try{ await ask(OKQ,'You are a test.',{only:'gemini'}); setProv('gemini'); st.textContent='Ключ работает.'; setup=false; setTimeout(renderChat,600) }
-    catch(e){ setKey(''); st.textContent=friendly(e) }
+    const k=$('aiKey').value.trim(), st=$('aiKeySt'), button=$('aiKeyBtn');
+    if(!k||button.disabled)return;
+    const previous=Storage.get(KEY,'');setKey(k);model=null;button.disabled=true;
+    st.textContent='Проверяю ключ…';
+    try{ await ask(OKQ,'You are a test.',{only:'gemini'});cancelTurn();setProv('gemini');setup=false;renderChat() }
+    catch(e){ setKey(previous);st.textContent=friendly(e) }
+    finally{button.disabled=false}
   }
   function setupCard(){
-    return '<div class="ai-card"><b>Источник ИИ</b><p style="margin:6px 0 12px">По умолчанию всё работает само. Здесь можно выбрать другой источник.</p>'
-      +'<button class="ai-opt" data-p="auto"><b>Авто (по умолчанию)</b><span>Сайт сам берёт бесплатный источник. Ничего настраивать не нужно.</span></button>'
-      +'<button class="ai-opt" data-p="puter"><b>Puter (рекомендуется)</b><span>Один раз войди в бесплатный аккаунт Puter. У каждого пользователя свой бесплатный месячный лимит.</span></button>'
-      +'<button class="ai-opt" data-p="poll"><b>Без регистрации</b><span>Анонимный сервис Pollinations. Может быть медленнее и иногда недоступен.</span></button>'
-      +'<button class="ai-opt" data-p="gemini"><b>Свой ключ Gemini</b><span>Для тех, у кого есть бесплатный ключ Google AI Studio.</span></button>'
-      +'<div class="ai-key" id="aiKeyBox" style="display:none;margin-top:10px"><input id="aiKey" type="password" placeholder="Ключ API" autocomplete="off"><button class="btn-primary" id="aiKeyBtn" style="padding:10px 16px">Сохранить</button></div>'
-      +'<div id="aiKeySt" style="margin-top:8px;font-size:.85rem"></div>'
-      +'<p style="margin-top:10px;font-size:.8rem">Сообщения отправляются выбранному сервису, не пиши личные данные. Без ИИ работают поиск переводов по словарю и сценарии.</p></div>';
+    return '<div class="ai-card"><b>Источник ИИ</b><p style="margin:6px 0 12px">Встроенные упражнения доступны без аккаунта. Для свободного чата выбери один сервис.</p>'
+      +'<button class="ai-opt" data-p="local"><b>Встроенная практика</b><span>Перевод из словаря, правила и сценарии без интернета.</span></button>'
+      +'<button class="ai-opt" data-p="puter"><b>Puter</b><span>Потребуется войти в аккаунт. Доступ зависит от лимита сервиса.</span></button>'
+      +(window.EF_AI_PROXY?'<button class="ai-opt" data-p="proxy"><b>Сервис сайта</b></button>':'')
+      +'<button class="ai-opt" data-p="gemini"><b>Свой ключ Gemini</b><span>Ключ хранится в этом браузере и используется только для запросов к Gemini.</span></button>'
+      +'<div class="ai-key" id="aiKeyBox" style="display:none;margin-top:10px"><input id="aiKey" type="password" placeholder="Ключ API" aria-label="Ключ API Gemini" autocomplete="off"><button class="btn-primary" id="aiKeyBtn" style="padding:10px 16px">Подключить</button></div>'
+      +'<div id="aiKeySt" role="status" style="margin-top:8px;font-size:.85rem"></div>'
+      +'<p style="margin-top:10px;font-size:.8rem">В режиме ИИ сообщения отправляются выбранному сервису. Не вводи личные данные.</p></div>';
   }
   const vpName=()=>{try{return Storage.getSettings().voiceName||''}catch(e){return ''}};
   const vpLabel=()=>{const n=vpName(); return 'Голос: '+(n?n.replace(/^(Microsoft|Google) /,'').replace(/ Online \(Natural\)/,'').slice(0,20):'авто')};
@@ -5477,15 +5671,16 @@ window.EFChat=(function(){
   <g class="mwaves"><path d="M12 80q-8 16 0 32"/><path d="M2 72q-14 24 0 48"/><path d="M188 80q8 16 0 32"/><path d="M198 72q14 24 0 48"/></g></svg>`};
   const KNAME={flow:'Флоу',fox:'Лис',owl:'Сова'}, MNAME={angry:'Злой',normal:'Обычный',kind:'Добрый'}, KV={flow:'af_heart',fox:'am_adam',owl:'af_bella'}, MSP={angry:1.05,normal:1,kind:.95};
   const PERS={angry:'Act as a strict, no-nonsense English teacher and IELTS-style examiner: formal, brief and demanding. Point out every mistake directly but fairly, praise rarely, stay in character. Never insult the student.',normal:'Be a clear, calm and neutral teacher.',kind:'Be warm, encouraging and patient.'};
-  const eng=()=>{try{return Storage.get('ef_voice_engine','device')||'device'}catch(e){return 'device'}};
-  const settingsBar=()=>'<button class="ai-cfg" id="aiCfg"></button><div class="ai-cfgp" id="aiCfgP"><div class="ai-cl">Персонаж</div><div class="ai-kds">'+Object.keys(KNAME).map(k=>'<button class="ai-kd" data-kd="'+k+'"><div class="ai-orb mini idle m-normal">'+MASCOTS[k]('k'+k)+'</div><span>'+KNAME[k]+'</span></button>').join('')+'</div><div class="ai-cl">Характер</div><div class="ai-row">'+Object.keys(MNAME).map(k=>'<button class="ai-md" data-md="'+k+'">'+MNAME[k]+'</button>').join('')+'</div><div class="ai-cl">Голос</div><div class="ai-row"><button class="ai-eng" data-eng="device">Голос телефона</button><button class="ai-eng" data-eng="natural">Естественный (бета)</button></div><div id="aiNatSt" class="ai-nat">Естественный голос скачивается один раз (около 90 МБ) и потом работает на телефоне. Русские фразы читает голос телефона.</div></div><div class="ai-act"><button class="ai-actb" id="aiCall">Позвонить</button><button class="ai-actb" id="aiExam">Экзамен IELTS</button><button class="ai-actb" id="aiSum">Итог разговора</button></div>';
-  const cfgLabel=()=>'Репетитор: '+KNAME[kind]+', '+MNAME[persona].toLowerCase()+', '+(eng()==='natural'&&window.EFVoice&&EFVoice.isNatural()?'естественный голос':'голос телефона');
+  const eng=()=>{try{return Storage.get('ef_voice_engine','natural')||'natural'}catch(e){return 'natural'}};
+  const settingsBar=()=>'<button class="ai-cfg" id="aiCfg"></button><div class="ai-cfgp" id="aiCfgP"><div class="ai-cl">Персонаж</div><div class="ai-kds">'+Object.keys(KNAME).map(k=>'<button class="ai-kd" data-kd="'+k+'"><div class="ai-orb mini idle m-normal">'+MASCOTS[k]('k'+k)+'</div><span>'+KNAME[k]+'</span></button>').join('')+'</div><div class="ai-cl">Характер</div><div class="ai-row">'+Object.keys(MNAME).map(k=>'<button class="ai-md" data-md="'+k+'">'+MNAME[k]+'</button>').join('')+'</div><div class="ai-cl">Голос</div><div class="ai-row"><button class="ai-eng" data-eng="device">Голос телефона</button><button class="ai-eng" data-eng="natural">Естественный</button></div><div id="aiNatSt" class="ai-nat">Модель для английского загружается при первом использовании. Для русского используется голос устройства.</div></div><div class="ai-act"><button class="ai-actb" id="aiCall">Позвонить</button><button class="ai-actb" id="aiExam">Экзамен IELTS</button><button class="ai-actb" id="aiSum">Итог разговора</button></div>';
+  const cfgLabel=()=>'Репетитор: '+KNAME[kind]+', '+MNAME[persona].toLowerCase()+', '+(eng()==='natural'?'естественный голос':'голос устройства');
   function applyVoice(){ try{EFVoice.setNat({voice:KV[kind],speed:MSP[persona]})}catch(e){} }
   function paintOrb(){ const o=$('aiOrb'); if(!o) return; o.className='ai-orb '+state+' m-'+persona+' k-'+kind; o.innerHTML=MASCOTS[kind]('main') }
   function paintCfg(){ const b=$('aiCfg'); if(b) b.textContent=cfgLabel()+'  ▾'; document.querySelectorAll('.ai-kd').forEach(x=>x.classList.toggle('on',x.dataset.kd===kind)); document.querySelectorAll('.ai-md').forEach(x=>x.classList.toggle('on',x.dataset.md===persona)); document.querySelectorAll('.ai-eng').forEach(x=>x.classList.toggle('on',x.dataset.eng===eng())) }
   async function setEngine(e){
     const st=$('aiNatSt'); const save=v=>{try{Storage.set('ef_voice_engine',v)}catch(x){}};
     if(e==='device'){ save('device'); paintCfg(); return }
+    EFVoice.prepareAudio();
     if(EFVoice.isNatural()){ save('natural'); paintCfg(); applyVoice(); stopSp(); EFVoice.speak('Hello! This is my natural voice.'); return }
     if(st) st.textContent='Скачиваю голос: 0%';
     try{ await EFVoice.loadNatural(p=>{ if(p&&p.status==='progress'&&/\.onnx/.test(p.file||'')&&st) st.textContent='Скачиваю голос: '+Math.round(p.progress||0)+'%' });
@@ -5578,15 +5773,16 @@ window.EFChat=(function(){
   document.addEventListener('keydown',e=>{ if(e.code!=='Space'||spaceDown) return; const v=$('view-tutor'); if(!v||!v.classList.contains('active')||tab!=='chat') return; const a=document.activeElement; if(a&&/INPUT|TEXTAREA|BUTTON|SELECT/.test(a.tagName)) return; e.preventDefault(); spaceDown=true; if(state!=='listening') listen() });
   document.addEventListener('keyup',e=>{ if(e.code==='Space'&&spaceDown){ spaceDown=false; if(state==='listening'){ try{rec&&rec.stop()}catch(x){} } } });
   function renderChat(){
-    const p=$('tuChatPane'); if(!p) return; const has=!!getProv();
-    p.innerHTML='<div class="ai-orb '+state+' m-'+persona+' k-'+kind+'" id="aiOrb">'+MASCOTS[kind]('main')+'</div><div class="ai-st" id="aiSt">'+LAB[state]+'</div>'+settingsBar()
-      +((!has||setup)?setupCard():'')
+    const p=$('tuChatPane'); if(!p) return; const has=getProv()!=='local';
+    p.innerHTML='<div class="ai-orb '+state+' m-'+persona+' k-'+kind+'" id="aiOrb">'+MASCOTS[kind]('main')+'</div><div class="ai-st" id="aiSt" role="status">'+LAB[state]+'</div>'+settingsBar()
+      +(setup?setupCard():'<p class="section-desc">'+(has?'ИИ: '+provName():'Встроенная практика · работает без интернета')+'</p>')
       +'<div class="ai-log" id="aiLog"></div>'
       +'<div class="ai-chips" id="aiChips">'+CHIPS.map(c=>'<button class="ai-chip">'+esc(c)+'</button>').join('')+'</div>'
       +'<div id="aiExBtn" class="ai-exbtn"></div><div class="ai-dock"><button class="tu-mic" id="aiMic" aria-label="Говорить">'+MIC+'</button><input id="aiIn" placeholder="'+(has?'Напиши или скажи что-нибудь…':'Спроси: как сказать «спасибо»?')+'" autocomplete="off"><button class="tu-send" id="aiSend" aria-label="Отправить">'+SEND+'</button></div>'
       +'<div class="ai-tools"><span>Говорю:</span><button id="aiEn" class="'+(lang==='en-US'?'on':'')+'">English</button><button id="aiRu" class="'+(lang==='ru-RU'?'on':'')+'">Русский</button><button id="aiVoice">Озвучка: '+(voiceOn?'вкл':'выкл')+'</button><button id="aiVP">'+vpLabel()+'</button><button id="aiExp">Объяснения: '+(explain==='ru'?'по-русски':'по-английски')+'</button><button id="aiKeyTog">'+(has?'ИИ: '+provName():'Подключить ИИ')+'</button><button id="aiNew">Новый диалог</button></div>';
     const log=$('aiLog'); msgs.forEach(m=>log.appendChild(bubble(m.r,m.t)));
     if(msgs.length) $('aiChips').style.display='none';
+    if(busy)setState('thinking');
     p.querySelectorAll('.ai-chip').forEach(b=>b.onclick=()=>send(b.textContent));
     $('aiSend').onclick=()=>{const i=$('aiIn'); const v=i.value; i.value=''; send(v)};
     $('aiIn').onkeydown=e=>{if(e.key==='Enter'){const v=e.target.value; e.target.value=''; send(v)}};
@@ -5599,16 +5795,16 @@ window.EFChat=(function(){
     $('aiSum').onclick=()=>{ if(msgs.filter(m=>m.r==='me').length<2){ addMsg('err','Сначала немного поговори, потом попроси итог.'); return } send('Дай короткий итог разговора: мои главные ошибки с исправлениями и 5 полезных слов. Простым текстом.') };
     callUI(); if(ex) $('aiExam').textContent='Завершить экзамен';
     $('aiEn').onclick=()=>{lang='en-US';renderChat()}; $('aiRu').onclick=()=>{lang='ru-RU';renderChat()};
-    $('aiVoice').onclick=()=>{voiceOn=!voiceOn; if(!voiceOn) stopSp(); $('aiVoice').textContent='Озвучка: '+(voiceOn?'вкл':'выкл')};
+    $('aiVoice').onclick=()=>{voiceOn=!voiceOn; Storage.set('ef_tutor_voice',voiceOn);if(!voiceOn) stopSp();else EFVoice.prepareAudio(); $('aiVoice').textContent='Озвучка: '+(voiceOn?'вкл':'выкл')};
     $('aiVP').onclick=vpNext; $('aiExp').onclick=()=>{explain=explain==='ru'?'en':'ru'; $('aiExp').textContent='Объяснения: '+(explain==='ru'?'по-русски':'по-английски')};
     $('aiKeyTog').onclick=()=>{setup=!setup; renderChat()};
-    $('aiNew').onclick=()=>{stopSp(); msgs=[]; renderChat()};
+    $('aiNew').onclick=()=>{if(callOn)endCall();if(ex)endExam();stopSp();cancelTurn();msgs=[];practiceState={};renderChat()};
     p.querySelectorAll('.ai-opt').forEach(b=>b.onclick=()=>choose(b.dataset.p)); if($('aiKeyBtn')){$('aiKeyBtn').onclick=saveKey; $('aiKey').onkeydown=e=>{if(e.key==='Enter')saveKey()}}
   }
   function show(){
     const v=$('view-tutor'); if(!v) return; document.body.classList.add('tu-on'); try{ if(eng()==='natural'&&!EFVoice.isNatural()) EFVoice.loadNatural().catch(()=>{}) }catch(e){}
     if(!$('tuChatPane')){
-      v.innerHTML='<h2 class="section-title">Репетитор</h2><p class="section-desc">Разговор с ИИ, переводы и короткие сценарии. Отвечай голосом или текстом.</p><div class="tu-seg"><button data-t="chat">ИИ-чат</button><button data-t="scn">Сценарии</button></div><div id="tuChatPane"></div><div id="tuScn" style="display:none"></div>';
+      v.innerHTML='<h2 class="section-title">Репетитор</h2><p class="section-desc">Разговор с ИИ, переводы и короткие сценарии. Отвечай голосом или текстом.</p><div class="tu-seg"><button data-t="chat">Практика и ИИ</button><button data-t="scn">Сценарии</button></div><div id="tuChatPane"></div><div id="tuScn" style="display:none"></div>';
       v.querySelectorAll('.tu-seg button').forEach(b=>b.onclick=()=>pick(b.dataset.t));
     }
     pick(tab);
@@ -5616,9 +5812,9 @@ window.EFChat=(function(){
   function pick(t){
     tab=t; document.querySelectorAll('.tu-seg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
     $('tuChatPane').style.display=t==='chat'?'':'none'; $('tuScn').style.display=t==='scn'?'':'none';
-    if(t==='chat'){ renderChat() } else { if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
+    if(t==='chat'){ renderChat() } else { cancelTurn();if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
   }
-  function stop(){ if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
+  function stop(){ if(callOn) endCall(); if(ex) endExam(); if(busy)cancelTurn();stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
   return{show,stop,send,_local:local,_state:()=>({msgs,model,state})};
 })();
 </script>
@@ -5687,5 +5883,7 @@ body.tb-off .top-bar{display:none!important}
 .ai-actb.on{background:#ef4444;border-color:#ef4444;color:#fff}
 .ai-exbtn{display:flex;margin-bottom:8px}.ai-exbtn .ai-actb{background:var(--accent);border-color:var(--accent);color:#fff}
 #aiMic{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-</style></body>
+</style>
+<link rel="stylesheet" href="flow-experience.css">
+</body>
 </html>
