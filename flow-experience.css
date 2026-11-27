@@ -1,0 +1,64 @@
+[hidden] { display: none !important; }
+.flow-nav { padding: 2px 14px 10px; }
+.flow-search-label { display: block; color: var(--text-secondary); font-size: .72rem; font-weight: 800; margin-bottom: 5px; }
+.flow-nav input, .flow-controls select, .flow-filter select, #flowVoiceEngine {
+  min-width: 0; max-width: 100%; padding: 9px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit;
+}
+.flow-nav input { width: 100%; font-size: .88rem; }
+.flow-pins { display: flex; overflow-x: auto; gap: 5px; margin-top: 8px; padding: 3px 2px; }
+.flow-pins button, .flow-pin {
+  background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer; min-height: 36px;
+}
+.flow-pins button { flex: none; padding: 4px 9px; font-size: .8rem; }
+.flow-pin { color: var(--text-secondary); border-color: transparent; background: transparent; font-size: 1.05rem; }
+.flow-pin[aria-pressed=false] { opacity: .53; }
+.flow-pins [aria-current], .flow-pin[aria-pressed=true] { color: var(--accent); background: var(--accent-light); }
+.flow-nav-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px; align-items: center; gap: 2px; margin-right: 2px; }
+.flow-nav-row .nav-link { min-width: 0; width: 100%; margin: 0; padding-right: 2px; }
+.flow-nav-row .nav-link:hover { transform: none; }
+.flow-nav-empty { color: var(--text-secondary); text-align: center; padding: 15px 5px; }
+.nav-links.more { mask-image: none; -webkit-mask-image: none; }
+body .sidebar, body .mobile-header {
+  background: color-mix(in srgb, var(--surface) var(--flow-panel, 87%), transparent) !important;
+}
+body #view-dashboard .flow-home {
+  display: grid; grid-template-columns: 1fr auto; align-items: end;
+  text-align: left; gap: 22px; padding: clamp(20px, 4vw, 36px); margin-top: 0;
+  background: linear-gradient(146deg, color-mix(in srgb, var(--accent) 12%, var(--surface)), var(--surface) 65%);
+}
+.flow-home .flow-kicker { display: block; color: var(--text-secondary); font-size: .75rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.flow-home h2 { font-size: clamp(1.65rem, 4vw, 2.5rem); line-height: 1.12; margin: 8px 0; letter-spacing: -.04em; }
+.flow-home p, #flowSoundPanel p { color: var(--text-secondary); margin: 0; }
+.flow-home .flow-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.flow-actions button, .flow-controls button { min-height: 42px; margin: 0; white-space: normal; }
+.flow-actions .xo, .flow-controls .xo { width: auto; }
+#flowLookDialog { text-align: left; width: min(600px, calc(100vw - 24px)); max-width: none; padding: clamp(16px, 4vw, 26px); overscroll-behavior: contain; }
+#flowLookDialog h2 { margin: 0 0 10px; }
+#flowLookDialog h3 { margin: 14px 0 8px; font-size: 1rem; }
+#lkBg { grid-template-columns: repeat(auto-fit, minmax(106px, 1fr)); }
+#lkBg .tl { height: 52px; padding: 4px; }
+.flow-controls, .flow-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.flow-controls label, .flow-filter label { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .88rem; }
+.flow-slider { display: grid; gap: 4px; margin: 10px 0; color: var(--text); font-weight: 600; font-size: .9rem; }
+.flow-slider input { width: 100%; accent-color: var(--accent); }
+#flowSoundPanel { border-top: 1px solid var(--border); margin-top: 14px; }
+#flowSoundPanel .flow-controls { margin: 9px 0; }
+#flowSoundStatus { min-height: 1.4em; font-size: .85rem; }
+.flow-filter { margin: 0 0 10px; }
+#rsCount { margin: 0 0 10px; color: var(--text-secondary); font-size: .85rem; }
+#settingsModal .modal { max-height: 90vh; overflow-y: auto; }
+#view-tutor [role=status], #flowVoiceStatus { color: var(--text-secondary); }
+#flowVoiceStatus { font-size: .8rem; }
+@media (max-width: 720px) {
+  body #view-dashboard .flow-home { grid-template-columns: 1fr; gap: 12px; }
+  .flow-home .flow-actions { width: 100%; }
+  .flow-home .flow-actions button { flex: 1; }
+  .flow-nav-row .nav-link { min-height: 44px; }
+  #flowLookDialog { max-height: 88dvh !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #bgfx i, #bgp, .ai-orb * { animation: none !important; }
+}
