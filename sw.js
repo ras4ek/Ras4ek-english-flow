@@ -11,16 +11,18 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET' || !allowed.has(req.url) && req.mode !== 'navigate') return;
   if (!req.url.startsWith(self.registration.scope)) return;
-  event.respondWith((async () => {
+  const network = fetch(req);
+  if (allowed.has(req.url)) {
+    event.waitUntil(network.then(response => {
+      if (!response.ok) return;
+      const copy = response.clone();
+      return caches.open(CACHE).then(cache => cache.put(req, copy));
+    }).catch(() => {}));
+  }
+  event.respondWith(network.catch(async () => {
     const cache = await caches.open(CACHE);
-    try {
-      const response = await fetch(req);
-      if (response.ok && allowed.has(req.url)) {
-        await cache.put(req, response.clone()).catch(() => {});
-      }
-      return response;
-    } catch {
-      return await cache.match(req) || (req.mode === 'navigate' ? await cache.match('./') : Response.error()) || Response.error();
-    }
-  })());
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    return (req.mode === 'navigate' && await cache.match('./')) || Response.error();
+  }));
 });

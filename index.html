@@ -2741,7 +2741,7 @@ class Storage {
 // ==================== SRS ====================
 class SRS {
   static INTERVALS = [1, 10, 1440, 5760];
-  static getState(id) { const s = Storage.getSRS(); return s[id] || { level: 0, nextReview: null, reviewCount: 0, correctCount: 0, lastReviewed: null }; }
+  static getState(id, s = Storage.getSRS()) { return s[id] || { level: 0, nextReview: null, reviewCount: 0, correctCount: 0, lastReviewed: null }; }
   static review(id, grade) {
     const s = Storage.getSRS(); let st = s[id] || { level: 0, nextReview: null, reviewCount: 0, correctCount: 0, lastReviewed: null };
     st.reviewCount++; st.lastReviewed = Date.now();
@@ -2749,9 +2749,9 @@ class SRS {
     else { const was = st.level; st.level = Math.min(st.level + 1, 3); let mins = this.INTERVALS[st.level]; if (was >= 3) { st.mast = (st.mast || 0) + 1; mins = [7, 14, 30, 60][Math.min(st.mast - 1, 3)] * 1440; } st.nextReview = Date.now() + mins * 60 * 1000; if (grade >= 2) st.correctCount++; }
     s[id] = st; Storage.setSRS(s); return st;
   }
-  static isDue(id) { const st = this.getState(id); return !st.nextReview || Date.now() >= st.nextReview; }
-  static getDueWords(words) { return words.filter(w => this.getState(w.id).reviewCount > 0 && this.isDue(w.id)); }
-  static getLevel(id) { return this.getState(id).level; }
+  static isDue(id, s = Storage.getSRS()) { const st = this.getState(id, s); return !st.nextReview || Date.now() >= st.nextReview; }
+  static getDueWords(words, s = Storage.getSRS()) { return words.filter(w => this.getState(w.id, s).reviewCount > 0 && this.isDue(w.id, s)); }
+  static getLevel(id, s = Storage.getSRS()) { return this.getState(id, s).level; }
   static getLevelLabel(l) { return ['Новое', 'Изучается', 'Закреплено', 'Мастер'][l] || 'Новое'; }
   static getLevelClass(l) { return `lvl-${l}`; }
 }
@@ -2792,7 +2792,7 @@ class Stats {
   }
   static getToday() { const today = LD(); return Storage.getStats().daily[today] || { correct: 0, total: 0 }; }
   static getLast7() { const stats = Storage.getStats(); const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(Date.now() - i * 86400000); const k = LD(d); const data = stats.daily[k] || { correct: 0, total: 0 }; days.push({ label: d.toLocaleDateString('ru-RU', { weekday: 'short' }), correct: data.correct, total: data.total }); } return days; }
-  static getDist(words) { const dist = [0, 0, 0, 0]; words.forEach(w => dist[SRS.getLevel(w.id)]++); return dist; }
+  static getDist(words) { const dist = [0, 0, 0, 0], s = Storage.getSRS(); words.forEach(w => dist[SRS.getLevel(w.id, s)]++); return dist; }
 }
 
 // ==================== CHARTS ====================
@@ -3181,7 +3181,8 @@ class App {
     const labels = ['Снова', 'Сложно', 'Хорошо', 'Легко'];
     this.toast(`${labels[grade]}! Следующий повтор: ${this.formatNextReview(SRS.getState(item.id).nextReview)}`, 'success');
     Stats.addXP(grade === 3 ? 15 : grade === 2 ? 10 : 5); this.updateXP();
-    const learned = this.words.filter(w => SRS.getLevel(w.id) >= 2).length;
+    const srs = Storage.getSRS();
+    const learned = this.words.filter(w => SRS.getLevel(w.id, srs) >= 2).length;
     if (learned >= 10) Achievements.check('first');
     if (learned >= 25) Achievements.check('starter');
     if (learned >= 50) Achievements.check('master');
@@ -3783,10 +3784,10 @@ class App {
 
   // ========== REVIEW ==========
   renderReview() {
-    const due = SRS.getDueWords(this.words); const list = document.getElementById('reviewList'); list.innerHTML = '';
+    const srs = Storage.getSRS(), due = SRS.getDueWords(this.words, srs); const list = document.getElementById('reviewList'); list.innerHTML = '';
     if (due.length === 0) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);font-weight:600">🎉 Все слова на повторении изучены! Отличная работа!</div>'; return; }
     due.slice(0, 40).forEach(w => {
-      const state = SRS.getState(w.id);
+      const state = SRS.getState(w.id, srs);
       const item = document.createElement('div'); item.className = 'review-item';
       item.innerHTML = `<div><div class="review-word">${w.word}</div><div class="review-meta">${w.translation} • Повторов: ${state.reviewCount}</div></div><div class="review-actions"><button class="btn-icon" title="Озвучить"></button><button class="btn-srs btn-good" data-id="${w.id}" style="padding:8px 14px;font-size:0.85rem">${tt('reviewKnow')}</button></div>`;
       item.querySelector('.btn-icon').addEventListener('click', () => this.speak(w.word));
@@ -3811,8 +3812,9 @@ class App {
   // ========== STATS ==========
   renderStats() {
     const stats = Storage.getStats();
-    const learned = this.words.filter(w => SRS.getLevel(w.id) >= 2).length;
-    const mastered = this.words.filter(w => SRS.getLevel(w.id) >= 3).length;
+    const srs = Storage.getSRS();
+    const learned = this.words.filter(w => SRS.getLevel(w.id, srs) >= 2).length;
+    const mastered = this.words.filter(w => SRS.getLevel(w.id, srs) >= 3).length;
     document.getElementById('statTotal').textContent = this.words.length;
     document.getElementById('statLearned').textContent = learned;
     document.getElementById('statMastered').textContent = mastered;
@@ -3829,11 +3831,12 @@ class App {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const filter = document.getElementById('listFilter').value;
     const list = document.getElementById('wordList'); if (!append) list.innerHTML = ''; else list.querySelectorAll('.wl-more').forEach(x => x.remove());
+    const srs = Storage.getSRS();
     let items = this.words.filter(w => w.word.toLowerCase().includes(search) || w.translation.toLowerCase().includes(search));
-    if (filter !== 'all') items = items.filter(w => { const lvl = SRS.getLevel(w.id); if (filter === 'new') return lvl === 0; if (filter === 'learning') return lvl === 1; if (filter === 'learned') return lvl >= 2; if (filter === 'due') return SRS.isDue(w.id); return true; });
+    if (filter !== 'all') items = items.filter(w => { const lvl = SRS.getLevel(w.id, srs); if (filter === 'new') return lvl === 0; if (filter === 'learning') return lvl === 1; if (filter === 'learned') return lvl >= 2; if (filter === 'due') return SRS.isDue(w.id, srs); return true; });
     const start = append ? list.querySelectorAll('.word-item').length : 0, E = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     items.slice(start, start + 60).forEach(w => {
-      const lvl = SRS.getLevel(w.id);
+      const lvl = SRS.getLevel(w.id, srs);
       const statusClass = lvl === 0 ? 'status-new' : lvl === 1 ? 'status-learning' : 'status-learned';
       const statusText = lvl === 0 ? 'Новое' : lvl === 1 ? 'Изучается' : 'Изучено';
       const item = document.createElement('div'); item.className = 'word-item';
@@ -4060,7 +4063,8 @@ class App {
     const q = this.getQuests();
     const today = Stats.getToday();
     const answeredToday = (Storage.getStats().daily[LD()] || {}).correct || 0;
-    const newToday = this.words.filter(w => { const st = SRS.getState(w.id); return st.lastReviewed && st.lastReviewed > new Date().setHours(0,0,0,0) && st.reviewCount === 1; }).length;
+    const srs = Storage.getSRS();
+    const newToday = this.words.filter(w => { const st = SRS.getState(w.id, srs); return st.lastReviewed && st.lastReviewed > new Date().setHours(0,0,0,0) && st.reviewCount === 1; }).length;
     const quests = [
       { id: 'new10', icon: '🌱', name: '10 новых слов', desc: 'Открой 10 слов в карточках и оцени их', cur: Math.min(newToday, 10), max: 10 },
       { id: 'answer15', icon: '🎯', name: '15 верных ответов', desc: 'В тестах, спринте или марафоне', cur: Math.min(answeredToday, 15), max: 15 },
@@ -4345,7 +4349,8 @@ class App {
 
   // ========== PROGRESS & GOAL & XP & HEARTS ==========
   updateProgress() {
-    const learned = this.words.filter(w => SRS.getLevel(w.id) >= 2).length;
+    const srs = Storage.getSRS();
+    const learned = this.words.filter(w => SRS.getLevel(w.id, srs) >= 2).length;
     const total = this.words.length;
     const pct = total > 0 ? Math.round((learned / total) * 100) : 0;
     this.animateCount(document.getElementById('learnedCount'), learned);
@@ -4447,7 +4452,8 @@ button:active,.xo:active{transform:scale(.96)}
 .xi{width:100%;padding:12px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--bg);color:var(--text);font-size:1.05rem;margin:6px 0;user-select:text;-webkit-user-select:text}
 .xg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #bkTabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}#bkTabs button{white-space:nowrap}
-.lite .sidebar,.lite .modal-overlay{backdrop-filter:none!important}
+.lite .sidebar,.lite .mobile-header,.lite .modal-overlay{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.lite #bgfx i{animation:none!important;will-change:auto}.lite #bgfx i:nth-of-type(n+2){display:none!important}
 #bgfx i{display:block!important;opacity:.24;animation-duration:var(--flow-glow,85s)!important}
 #bgfx i:nth-of-type(1){background:radial-gradient(circle,var(--b1),transparent 65%)!important}
 #bgfx i:nth-of-type(2){background:radial-gradient(circle,var(--b2),transparent 65%)!important}
@@ -4497,7 +4503,9 @@ const SC={sakura:{n:'Сакура',l:['#fff4ee','#efdefa'],d:['#23152e','#1c1428
 const COL=['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#e11d48','#ca8a04'];
 let L=Object.assign({bg:'sakura',anim:!matchMedia('(prefers-reduced-motion:reduce)').matches,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0,panel:87},Storage.get('ef_look',{}));
 const reducedMotion=matchMedia('(prefers-reduced-motion:reduce)');
-const cv=$('#bgc'),cx=cv.getContext('2d');let W,H,P=[],raf=0,tl=0,lite=L.q==='eco',spr,mo,pet,cl,sh=null;
+const autoLite=()=>matchMedia('(pointer: coarse)').matches||(navigator.hardwareConcurrency>0&&navigator.hardwareConcurrency<=4)||(navigator.deviceMemory>0&&navigator.deviceMemory<=4);
+const useLite=()=>L.q==='eco'||(L.q==='auto'&&autoLite());
+const cv=$('#bgc'),cx=cv.getContext('2d');let W,H,P=[],raf=0,tl=0,phase=0,lite=useLite(),spr,mo,pet,cl,sh=null;
 const sprite=c=>{const s=document.createElement('canvas');s.width=s.height=32;const g=s.getContext('2d'),r=g.createRadialGradient(16,16,0,16,16,16);r.addColorStop(0,c);r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,32,32);return s};
 const petal=()=>{const s=document.createElement('canvas');s.width=s.height=48;const g=s.getContext('2d');g.translate(24,24);const r=g.createRadialGradient(-4,-4,2,0,0,20);r.addColorStop(0,'#fff5f9');r.addColorStop(.6,'#ffb7d0');r.addColorStop(1,'#f472b6');g.fillStyle=r;g.beginPath();g.moveTo(0,-18);g.bezierCurveTo(16,-18,18,6,0,18);g.bezierCurveTo(-18,6,-16,-18,0,-18);g.fill();return s};
 const cloud=()=>{const s=document.createElement('canvas');s.width=256;s.height=96;const g=s.getContext('2d');[[60,60,40],[110,44,48],[160,52,44],[205,64,34],[130,66,50]].forEach(([x,y,r])=>{const q=g.createRadialGradient(x,y,0,x,y,r);q.addColorStop(0,'rgba(255,255,255,.9)');q.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=q;g.beginPath();g.arc(x,y,r,0,6.283);g.fill()});return s};
@@ -4522,8 +4530,14 @@ function size(){const d=Math.min(devicePixelRatio||1,lite?1:1.5);W=innerWidth;H=
 function spawn(){const f=(lite?.5:1)*(W<700?.6:1),n=({sakura:30,night:110,fireflies:30,rain:110,snow:70,sunset:7,galaxy:90,mountains:4}[L.bg]||0)*f|0;P=[];for(let i=0;i<n;i++)P.push({x:Math.random()*W,y:Math.random()*H,s:Math.random(),a:Math.random()*6.28,v:Math.random(),z:.2+Math.random()*.8});
  if(L.bg==='fireflies')spr=sprite('rgba(255,236,120,1)');if(L.bg==='night')mo=sprite('rgba(255,244,210,.9)');if(L.bg==='sakura')pet=petal();if(L.bg==='snow')spr=sprite('rgba(255,255,255,1)');
  if(L.bg==='sunset'||L.bg==='mountains'){spr=sprite('rgba(255,190,120,1)');cl=cloud();P.forEach(p=>{p.w=160+p.s*220;p.y=Math.random()*H*.5})}if(L.bg==='galaxy')neb=[sprite('rgba(139,92,246,1)'),sprite('rgba(236,72,153,1)')]}
-function loop(t){raf=requestAnimationFrame(loop);if(t-tl<(lite?30:0))return;const dt=Math.min((t-tl)/16.7,3);tl=t;DR[L.bg](dt*L.sp,t*L.sp)}
-function start(){cancelAnimationFrame(raf);raf=0;if(!DR[L.bg]||!cx)return;size();spawn();tl=performance.now();if(!L.anim||reducedMotion.matches||document.hidden){DR[L.bg](0,0);return}raf=requestAnimationFrame(loop)}
+function loop(t){
+ raf=requestAnimationFrame(loop);
+ const elapsed=t-tl, interval=L.q==='max'?0:lite?1000/24:1000/30;
+ if(elapsed<interval-1)return;
+ const dt=Math.min(elapsed/16.7,3), speed=Number(L.sp)||.6;
+ tl=t;phase+=dt*16.7*speed;DR[L.bg](dt*speed,phase);
+}
+function start(){cancelAnimationFrame(raf);raf=0;if(!DR[L.bg]||!cx)return;size();spawn();tl=performance.now();if(!L.anim||reducedMotion.matches||document.hidden){DR[L.bg](0,phase);return}raf=requestAnimationFrame(loop)}
 function grad(){const c=SC[L.bg]||SC.sakura,v=isDark()?c.d:c.l,s=$('#bgfx').style;
  s.setProperty('--g1',v[0]);s.setProperty('--g2',v[1]);c.b.forEach((x,i)=>s.setProperty('--b'+(i+1),x));
  const speed=Math.max(.2,Number(L.sp)||.6);
@@ -4630,8 +4644,8 @@ memory(el,e,pool,nx,mk){const p=shuf(pool).slice(0,6),t=shuf(p.flatMap(x=>[{x,t:
   const ca=t[a.dataset.i];if(ca.x===c.x){[a,b].forEach(z=>{z.classList.remove('on');z.classList.add('ok')});mk(c.x,1);a=null;if(!--left){tip('Все пары найдены!');setTimeout(nx,900)}}else{lock=1;const o=a;a=null;setTimeout(()=>{[o,b].forEach(z=>{z.classList.remove('on');z.textContent='?'});lock=0},750)}})},
 swipe(el,e,pool,nx,mk){el.innerHTML=`<div class="xc" id="sw" style="touch-action:pan-y;cursor:grab;min-height:170px"><h3>${esc(e.k)}</h3><small>${e.t||''}</small><small id="swr" hidden><b>${esc(e.ru)}</b></small><small>Тап — перевод. Вправо — знаю, влево — учу</small></div>`;const c=$('#sw');let x0=0,dx=0,dn=0;
  c.onpointerdown=ev=>{dn=1;x0=ev.clientX;c.setPointerCapture(ev.pointerId);c.style.transition='none'};
- c.onpointermove=ev=>{if(!dn)return;dx=ev.clientX-x0;const vx=Math.abs(ev.movementX||0);c.style.filter=vx>3?'url(#mbh)':'';document.getElementById('mbhg').setAttribute('stdDeviation',Math.min(vx/3,7)+' 0');c.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;c.style.background=dx>0?'var(--success-light)':'var(--danger-light)'};
- c.onpointerup=()=>{dn=0;c.style.transition='transform .35s cubic-bezier(.22,1,.36,1),opacity .35s';if(Math.abs(dx)>90){c.style.transform=`translateX(${dx*5}px) rotate(${dx/5}deg)`;c.style.opacity=0;c.style.filter='url(#mbh)';document.getElementById('mbhg').setAttribute('stdDeviation','7 0');mk(e,dx>0);say(e.k);setTimeout(nx,300)}else{c.style.filter='';if(Math.abs(dx)<4){$('#swr').hidden=false;say(e.k)}c.style.transform='';c.style.background=''}dx=0}},
+ c.onpointermove=ev=>{if(!dn)return;dx=ev.clientX-x0;c.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;c.style.background=dx>0?'var(--success-light)':'var(--danger-light)'};
+ c.onpointerup=()=>{dn=0;c.style.transition='transform .35s cubic-bezier(.22,1,.36,1),opacity .35s';if(Math.abs(dx)>90){c.style.transform=`translateX(${dx*5}px) rotate(${dx/5}deg)`;c.style.opacity=0;mk(e,dx>0);say(e.k);setTimeout(nx,300)}else{if(Math.abs(dx)<4){$('#swr').hidden=false;say(e.k)}c.style.transform='';c.style.background=''}dx=0}},
 tf(el,e,pool,nx,mk){const ok=Math.random()<.5,ru=ok?e.ru:rnd(pool.filter(x=>x!==e)).ru;el.innerHTML=`<div class="xc"><h3>${esc(e.k)}</h3><small>${esc(ru.split(',')[0])}</small></div><div class="xg"><button class="xo">Неверно</button><button class="xo">Верно</button></div>`;
  el.querySelectorAll('.xo').forEach((b,i)=>b.onclick=()=>{const g=(i===1)===ok;el.querySelectorAll('.xo').forEach(x=>x.disabled=true);b.classList.add(g?'ok':'no');mk(e,g);say(e.k);setTimeout(nx,900)})},
 gaps(el,e,pool,nx,mk){const m=[...e.k].map((c,i)=>/[a-z]/i.test(c)&&i%2===1?'_':c).join(' ');typeQ(el,`<small>${esc(e.ru)}</small><h3 style="letter-spacing:2px">${esc(m)}</h3>`,e.k,e,nx,mk)},
@@ -4647,16 +4661,16 @@ G.mc=(el,e,pool,nx,mk)=>{const o=shuf([e,...shuf(pool.filter(x=>x!==e)).slice(0,
  el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const g=b.textContent===r;el.querySelectorAll('[data-r]').forEach(x=>{x.disabled=true;if(x.textContent===r)x.classList.add('ok')});if(!g)b.classList.add('no');mk(e,g);setTimeout(nx,1000)})};
 const RK=l=>({beginner:0,a1:0,a2:1,b1:2,b2:3,advanced:4,c1:4}[String(l).toLowerCase()]??2);
 const Wn=w=>({id:w.id,w:w.word,k:w.word,ru:w.translation,t:w.transcription||'',ex:w.example||''});
-const seen=id=>{try{return SRS.getState(id).reviewCount>0}catch(e){return false}};
+const seen=(id,srs)=>{try{return SRS.getState(id,srs).reviewCount>0}catch(e){return false}};
 const seq=(el,list,pool,fn,cb,mk)=>{let i=0;const go=()=>{if(i>=list.length)return cb();fn(el,list[i++],pool,go,mk)};go()};
 const streak=d=>{let n=0;for(let k=0;k<400;k++){if(d[LD(new Date(Date.now()-k*864e5))])n++;else if(k>0)break}return n};
 const intro=(el,e,pool,nx)=>{el.innerHTML=`<div class="xc"><h3>${esc(e.k)}</h3><small>${e.t||''}</small><b>${esc(e.ru)}</b>${e.ex?`<small><i>${esc(e.ex)}</i></small>`:''}<button class="xo" id="iS">${I('speaker')} Послушать</button></div><button class="xo" id="iN">Запомнил, дальше</button>`;$('#iS').onclick=()=>say(e.k);say(e.k);$('#iN').onclick=nx};
-function path(){const el=$('#phBody'),st=Object.assign({n:10,done:{}},Storage.get('ef_path',{})),S=A().words.filter(w=>w.translation),today=LD(),left=S.filter(w=>!seen(w.id)).length,mast=S.filter(w=>{try{return SRS.getLevel(w.id)>=2}catch(e){return 0}}).length,last=[...Array(14)].map((_,k)=>LD(new Date(Date.now()-(13-k)*864e5)));
+function path(){const el=$('#phBody'),st=Object.assign({n:10,done:{}},Storage.get('ef_path',{})),S=A().words.filter(w=>w.translation),srs=Storage.getSRS(),today=LD(),left=S.filter(w=>!seen(w.id,srs)).length,mast=S.filter(w=>{try{return SRS.getLevel(w.id,srs)>=2}catch(e){return 0}}).length,last=[...Array(14)].map((_,k)=>LD(new Date(Date.now()-(13-k)*864e5)));
  el.innerHTML=`<div class="xc"><h3 style="font-size:1.15rem">Урок дня · ${st.done[today]?'сегодня готово':'10–15 минут'}</h3><small>Серия: ${streak(st.done)} дн. · Выучено: ${mast} из ${S.length}</small><div class="xk" style="justify-content:center">${last.map(d=>`<span class="ic ${st.done[d]?'green':''}" style="opacity:${st.done[d]?1:.3}"><svg><use href="#i-${st.done[d]?'check':'dot'}"/></svg></span>`).join('')}</div><button class="btn-primary" id="phGo" style="width:100%">${st.done[today]?'Ещё один урок':'Начать урок'}</button></div>
  <div class="xc" style="text-align:left"><b>Новых слов в день</b><div class="xk" id="phN">${[5,10,20].map(n=>`<button data-n="${n}" class="${st.n===n?'on':''}">${n}</button>`).join('')}</div><small>При ${st.n} словах в день весь словарь пройдёт примерно за ${Math.ceil(left/st.n)} дн. Ещё не изучено: ${left}.</small></div>
  <div class="xc" style="text-align:left"><b>Как устроен урок</b><small>Знакомство со словами, выбор перевода, письмо, мемори, диктант на слух, перевод с русского и повторение того, что пора повторить. Всё идёт в интервальные повторения само.</small></div>`;
  $('#phN').onclick=e=>{if(e.target.dataset.n){st.n=+e.target.dataset.n;Storage.set('ef_path',st);path()}};$('#phGo').onclick=()=>run(st)}
-function run(st){const el=$('#phBody'),S=A().words.filter(w=>w.translation).sort((a,b)=>RK(a.level)-RK(b.level)),nw=S.filter(w=>!seen(w.id)).slice(0,st.n).map(Wn),due=S.filter(w=>seen(w.id)&&SRS.isDue(w.id)).slice(0,8).map(Wn),all=S.map(Wn),tot={n:0,ok:0};
+function run(st){const el=$('#phBody'),S=A().words.filter(w=>w.translation).sort((a,b)=>RK(a.level)-RK(b.level)),srs=Storage.getSRS(),nw=S.filter(w=>!seen(w.id,srs)).slice(0,st.n).map(Wn),due=S.filter(w=>seen(w.id,srs)&&SRS.isDue(w.id,srs)).slice(0,8).map(Wn),all=S.map(Wn),tot={n:0,ok:0};
  el.innerHTML='<div class="xc" id="phHd"></div><div id="phSt"></div>';const bx=$('#phSt');
  const mk=(x,g)=>{try{if(x.id)SRS.review(x.id,g?2:0)}catch(_){}tot.n++;if(g){tot.ok++;xp(2)}},pool=nw.concat(due),steps=[];
  if(nw.length){steps.push(['Знакомство со словами',cb=>seq(bx,nw,all,intro,cb)],['Выбери перевод',cb=>seq(bx,nw,all,G.mc,cb,mk)],['Напиши по-английски',cb=>seq(bx,nw.slice(0,4),all,(e2,x,p,go,m)=>typeQ(e2,`<h3>${esc(x.ru)}</h3><small>Напиши по-английски</small>`,x.k,x,go,m),cb,mk)])}
@@ -4703,7 +4717,7 @@ function init(){
    SC[id]={n,l:[l1,l2],d:[d1,d2],b:[color,l2,d2]};
    DR[id]=(_, time)=>EFExperience.paint(cx,id,W,H,time);
  }
- if(!Object.hasOwn(SC,L.bg)&&L.bg!=='off')L.bg='sakura';
+ if(L.bg==='photo'?!localStorage.getItem('ef_photo'):L.bg!=='off'&&!Object.hasOwn(SC,L.bg))L.bg='sakura';
  const a=A(),host=$('#view-list').parentNode,after=$('.nav-link[data-view=wordbox]');
  const T=[['path','map','Путь: урок дня','Путь: урок дня','Готовый план на каждый день: слова, игры, диктант и перевод. Репетитор не нужен.','<div id="phBody"></div>',path],['book','music','Из учебника','Фразы из учебника','17 способов выучить слова с твоей страницы Word Box.','<div class="goal-text" id="bkPro"></div><div class="xk" id="bkTabs"></div><div id="bkBody"></div>',book],
   ['lesson','languages','Урок: перевод','Урок: русский → английский','Учитель говорит по-русски, ты пишешь перевод на английском.','<div id="lsBody"></div>',lesson],
@@ -4786,10 +4800,10 @@ function init(){
      if(t.dataset.b==='photo'&&!localStorage.getItem('ef_photo')){pickPhoto();return}
      L.bg=t.dataset.b;
    }else if(t.dataset.c)L.acc=t.dataset.c;
-   else if(t.dataset.q){L.q=t.dataset.q;lite=L.q==='eco';if(L.q==='auto')setTimeout(probe,300)}
+   else if(t.dataset.q){L.q=t.dataset.q;lite=useLite();if(L.q==='auto'&&!lite)setTimeout(probe,300)}
    else if(t.id==='lkAn')L.anim=!L.anim;
    else if(t.id==='lkHp')L.hp=!L.hp;
-   else if(t.id==='lkRs'){L={bg:'sakura',anim:!reducedMotion.matches,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0,panel:87};lite=false;stopSound?.()}
+   else if(t.id==='lkRs'){L={bg:'sakura',anim:!reducedMotion.matches,acc:null,q:'auto',sp:.6,bl:false,fs:100,hp:true,mb:0,panel:87};lite=useLite();stopSound?.()}
    else return;
    look();draw();
    for(const k of ['b','c','q'])if(t.dataset[k]){m.querySelector(`[data-${k}="${t.dataset[k]}"]`)?.focus({preventScroll:true});break}
@@ -4816,7 +4830,7 @@ function init(){
  }
  window.EFExperience?.navigation(a);
  loadCustom();swap(document.body);look();
- if(L.q==='auto')setTimeout(probe,1800);if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}
+ if(L.q==='auto'&&!lite)setTimeout(probe,1800);if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0));
 })();
 </script>
@@ -4908,6 +4922,7 @@ window.EFVoice=(function(){
   }
   function devSpeakAsync(text,lang,opts){
     return new Promise(res=>{
+      try{natSrc?.stop()}catch(e){}
       if(!syn){res();return}
       const my=++token; try{syn.resume()}catch(e){} try{syn.cancel()}catch(e){}
       const c=cfg(), ru=lang==='ru', v=pick(ru?'ru':'en',ru?null:c.voiceName), parts=split(text);
@@ -5182,7 +5197,7 @@ window.EFRes=(function(){
     const items=L.filter(r=>(cat==='Все'||(cat==='★ Мои'?fv.includes(r.u):r.c===cat))&&(!ql||(r.n+' '+r.w+' '+r.c).toLowerCase().includes(ql))&&forLevel(r,level)&&(!access||access===r.k));
     box.querySelector('#rsCount').textContent='Найдено: '+items.length+' из '+L.length;
     box.querySelector('.rs-bar').innerHTML=C.map(c=>'<button class="rs-chip'+(c===cat?' on':'')+'" data-c="'+c+'" aria-pressed="'+(c===cat)+'">'+c+'</button>').join('');
-    box.querySelector('#rsList').innerHTML=items.length?items.map(card).join(''):'<p style="color:var(--text-secondary);text-align:center;padding:20px">'+(cat==='★ Мои'?'Пока нет закладок. Нажми ☆ у ресурса.':'Ничего не найдено.')+'</p>';
+    box.querySelector('#rsList').innerHTML=items.length?items.map(card).join(''):'<p style="color:var(--text-secondary);text-align:center;padding:20px">'+(cat==='★ Мои'&&!fv.length?'Пока нет закладок. Нажми ☆ у ресурса.':'Ничего не найдено.')+'</p>';
   }
   function render(){
     const v=document.getElementById('view-free'); if(!v) return;
@@ -5195,7 +5210,7 @@ window.EFRes=(function(){
       d.querySelector('#rsLevel').onchange=e=>{level=e.target.value;draw()};
       d.querySelector('#rsAccess').onchange=e=>{access=e.target.value;draw()};
       d.addEventListener('click',e=>{
-        const c=e.target.closest('.rs-chip'); if(c){cat=c.dataset.c;draw();return}
+        const c=e.target.closest('.rs-chip'); if(c){cat=c.dataset.c;draw();d.querySelector('.rs-chip.on')?.focus();return}
         const st=e.target.closest('.rs-star'); if(st){let f=favs(); const u=st.dataset.u; f=f.includes(u)?f.filter(x=>x!==u):f.concat(u); try{Storage.set('ef_res_fav',f)}catch(x){} draw()}
       });
     }
@@ -5377,7 +5392,7 @@ window.EFChat=(function(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const LAB={idle:'Готов',listening:'Слушаю…',thinking:'Думаю…',speaking:'Говорю…'};
   const CHIPS=['Давай поговорим по-английски','Как сказать «я опаздываю»?','Исправь: I goed to school yesterday','Объясни Present Perfect просто','IELTS Speaking Part 1: задай вопрос'];
-  let practiceState={}, turn=0, dismissRequest=null;
+  let practiceState={}, turn=0, dismissRequest=null, selection=0;
   let msgs=[],state='idle',lang='en-US',voiceOn=Storage.get('ef_tutor_voice',true),model=null,rec=null,busy=false,tab='chat',setup=false,spTok=0,explain='en',callOn=false,callFail=0,callT0=0,callTimer=0,ex=null,holdAt=0,spaceDown=false;
   let persona='angry',kind='flow'; try{persona=Storage.get('ef_ai_mood','angry')||'angry'; kind=Storage.get('ef_ai_kind','flow')||'flow'}catch(e){} if(!['angry','normal','kind'].includes(persona)) persona='angry'; if(!['flow','fox','owl'].includes(kind)) kind='flow';
   const $=id=>document.getElementById(id);
@@ -5423,8 +5438,8 @@ window.EFChat=(function(){
     } else d.textContent=t;
     return d;
   }
-  function addMsg(r,t){
-    msgs.push({r,t}); if(msgs.length>60) msgs.shift(); const log=$('aiLog'); if(!log) return;
+  function addMsg(r,t,local=false){
+    msgs.push({r,t,local}); if(msgs.length>60) msgs.shift(); const log=$('aiLog'); if(!log) return;
     const typ=$('aiTyping'); if(typ) typ.remove();
     const d=bubble(r,t); log.appendChild(d); d.scrollIntoView({block:'nearest',behavior:'smooth'});
     const c=$('aiChips'); if(c) c.style.display='none';
@@ -5448,14 +5463,15 @@ window.EFChat=(function(){
   const setProv=p=>{try{Storage.set('ef_ai_prov',p)}catch(e){}};
   const provName=()=>({local:'встроенная практика',puter:'Puter',gemini:'Gemini',proxy:'сервис сайта'}[getProv()]);
   const PUTER_MODELS=['gpt-5-nano','gpt-4o-mini']; let puterP=null;
-  async function callGemini(list,sys,signal){
+  async function callGemini(list,sys,signal,candidateKey){
+    const key=candidateKey??getKey(), preferred=candidateKey?null:model;
     const contents=list.map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.text}]})); let last=null;
-    for(const m of (model?[model,...MODELS.filter(m=>m!==model)]:MODELS)){
-      let r; try{ r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':getKey()},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{temperature:.7,maxOutputTokens:500}})}); }catch(e){ throw {code:'net'} }
-      if(r.status===404){last={code:404};model=null;continue}
+    for(const m of (preferred?[preferred,...MODELS.filter(m=>m!==preferred)]:MODELS)){
+      let r; try{ r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{temperature:.7,maxOutputTokens:500}})}); }catch(e){ throw {code:'net'} }
+      if(r.status===404){last={code:404};if(!candidateKey)model=null;continue}
       if(!r.ok){let j={}; try{j=await r.json()}catch(e){} throw {code:r.status,msg:(j.error&&j.error.message)||''}}
       const j=await r.json(); const p=(((j.candidates||[])[0]||{}).content||{}).parts; const txt=p?p.map(x=>x.text||'').join('').trim():'';
-      if(!txt) throw {code:'empty'}; model=m; return txt;
+      if(!txt) throw {code:'empty'}; if(!candidateKey)model=m; return txt;
     }
     throw last||{code:404};
   }
@@ -5503,7 +5519,7 @@ window.EFChat=(function(){
       timer=setTimeout(()=>cancel('timeout'),18000);
     });
     if(opt?.chat) dismissRequest=()=>cancel('cancelled');
-    try { return await Promise.race([call(list,sys,controller.signal),deadline]); }
+    try { return await Promise.race([call(list,sys,controller.signal,opt?.candidateKey),deadline]); }
     finally { clearTimeout(timer);if(opt?.chat)dismissRequest=null; }
   }
   function friendly(e){
@@ -5533,12 +5549,12 @@ window.EFChat=(function(){
   }
   async function send(text){
     text=String(text||'').trim();if(!text||busy)return;
-    if(ex){stopSp();if(!ex.long)addMsg('me',text);examAnswer(text);return}
-    const id=++turn;
-    stopSp();if(voiceOn)EFVoice.prepareAudio();busy=true;addMsg('me',text);setState('thinking');
+    if(ex){stopSp();if(!ex.long)addMsg('me',text,getProv()==='local');examAnswer(text);return}
+    const id=++turn, localMode=getProv()==='local';
+    stopSp();if(voiceOn)EFVoice.prepareAudio();busy=true;addMsg('me',text,localMode);setState('thinking');
     let reply, fallback=false;
     try{
-      if(getProv()==='local'){reply=local(text);fallback=true}
+      if(localMode){reply=local(text);fallback=true}
       else{
         const list=msgs.filter(x=>x.r!=='err'&&!x.local).slice(-12).map(x=>({role:x.r==='ai'?'assistant':'user',text:x.t}));
         reply=await ask(list,SYS(),{chat:true});
@@ -5549,8 +5565,7 @@ window.EFChat=(function(){
       reply=local(text);fallback=true;
     }finally{if(id===turn)busy=false}
     if(id!==turn)return;
-    setState('idle');addMsg('ai',reply);
-    if(fallback&&msgs.length)msgs.at(-1).local=true;
+    setState('idle');addMsg('ai',reply,fallback);
     if(voiceOn)speak(reply);
     $('aiIn')?.focus({preventScroll:true});
   }
@@ -5573,6 +5588,7 @@ window.EFChat=(function(){
   }
   const OKQ=[{role:'user',text:'Reply with the single word OK'}];
   async function choose(p){
+    const id=++selection;
     if(p==='local'){cancelTurn();setProv('local');setup=false;renderChat();return}
     if(p==='gemini'){ $('aiKeyBox').style.display='flex'; $('aiKey').focus(); return }
     const st=$('aiKeySt'), buttons=Array.from(document.querySelectorAll('.ai-opt'));
@@ -5588,7 +5604,7 @@ window.EFChat=(function(){
         if(!window.puter.auth.isSignedIn())await window.puter.auth.signIn();
       }
       await ask(OKQ,'You are a test.',{only:p});
-      if(!st.isConnected)return;
+      if(id!==selection||!st.isConnected)return;
       cancelTurn();setProv(p);setup=false;renderChat();
     }catch(e){st.textContent=e?.code?friendly(e):'Вход не завершён. Разреши всплывающие окна и попробуй ещё раз.'}
     finally{buttons.forEach(b=>b.disabled=false)}
@@ -5596,10 +5612,13 @@ window.EFChat=(function(){
   async function saveKey(){
     const k=$('aiKey').value.trim(), st=$('aiKeySt'), button=$('aiKeyBtn');
     if(!k||button.disabled)return;
-    const previous=Storage.get(KEY,'');setKey(k);model=null;button.disabled=true;
+    const id=++selection;button.disabled=true;
     st.textContent='Проверяю ключ…';
-    try{ await ask(OKQ,'You are a test.',{only:'gemini'});cancelTurn();setProv('gemini');setup=false;renderChat() }
-    catch(e){ setKey(previous);st.textContent=friendly(e) }
+    try{
+      await ask(OKQ,'You are a test.',{only:'gemini',candidateKey:k});
+      if(id!==selection||!setup||!st.isConnected)return;
+      cancelTurn();setKey(k);model=null;setProv('gemini');setup=false;renderChat();
+    }catch(e){ if(id===selection&&st.isConnected)st.textContent=friendly(e) }
     finally{button.disabled=false}
   }
   function setupCard(){
@@ -5797,12 +5816,12 @@ window.EFChat=(function(){
     $('aiEn').onclick=()=>{lang='en-US';renderChat()}; $('aiRu').onclick=()=>{lang='ru-RU';renderChat()};
     $('aiVoice').onclick=()=>{voiceOn=!voiceOn; Storage.set('ef_tutor_voice',voiceOn);if(!voiceOn) stopSp();else EFVoice.prepareAudio(); $('aiVoice').textContent='Озвучка: '+(voiceOn?'вкл':'выкл')};
     $('aiVP').onclick=vpNext; $('aiExp').onclick=()=>{explain=explain==='ru'?'en':'ru'; $('aiExp').textContent='Объяснения: '+(explain==='ru'?'по-русски':'по-английски')};
-    $('aiKeyTog').onclick=()=>{setup=!setup; renderChat()};
+    $('aiKeyTog').onclick=()=>{selection++;setup=!setup;renderChat()};
     $('aiNew').onclick=()=>{if(callOn)endCall();if(ex)endExam();stopSp();cancelTurn();msgs=[];practiceState={};renderChat()};
     p.querySelectorAll('.ai-opt').forEach(b=>b.onclick=()=>choose(b.dataset.p)); if($('aiKeyBtn')){$('aiKeyBtn').onclick=saveKey; $('aiKey').onkeydown=e=>{if(e.key==='Enter')saveKey()}}
   }
   function show(){
-    const v=$('view-tutor'); if(!v) return; document.body.classList.add('tu-on'); try{ if(eng()==='natural'&&!EFVoice.isNatural()) EFVoice.loadNatural().catch(()=>{}) }catch(e){}
+    const v=$('view-tutor'); if(!v) return; document.body.classList.add('tu-on');
     if(!$('tuChatPane')){
       v.innerHTML='<h2 class="section-title">Репетитор</h2><p class="section-desc">Разговор с ИИ, переводы и короткие сценарии. Отвечай голосом или текстом.</p><div class="tu-seg"><button data-t="chat">Практика и ИИ</button><button data-t="scn">Сценарии</button></div><div id="tuChatPane"></div><div id="tuScn" style="display:none"></div>';
       v.querySelectorAll('.tu-seg button').forEach(b=>b.onclick=()=>pick(b.dataset.t));
@@ -5812,9 +5831,9 @@ window.EFChat=(function(){
   function pick(t){
     tab=t; document.querySelectorAll('.tu-seg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
     $('tuChatPane').style.display=t==='chat'?'':'none'; $('tuScn').style.display=t==='scn'?'':'none';
-    if(t==='chat'){ renderChat() } else { cancelTurn();if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
+    if(t==='chat'){ renderChat() } else { selection++;cancelTurn();if(callOn) endCall(); if(ex) endExam(); stopSp(); try{rec&&rec.stop()}catch(e){} EFTutor.menu() }
   }
-  function stop(){ if(callOn) endCall(); if(ex) endExam(); if(busy)cancelTurn();stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
+  function stop(){ selection++;if(callOn) endCall(); if(ex) endExam(); if(busy)cancelTurn();stopSp(); try{rec&&rec.stop()}catch(e){} document.body.classList.remove('tu-on')}
   return{show,stop,send,_local:local,_state:()=>({msgs,model,state})};
 })();
 </script>

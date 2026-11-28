@@ -127,20 +127,27 @@
     const select = host.querySelector('select'), volume = host.querySelector('input'), button = host.querySelector('button');
     const status = host.querySelector('[role=status]');
     select.value = prefs.sound;
-    let context, source, gain;
-    function stop() {
+    let context, source, gain, requestId = 0;
+    function stopSource() {
       if (source) { source.stop(); source.disconnect(); source = null; }
+    }
+    function stop() {
+      requestId++;
+      stopSource();
+      button.disabled = false;
       button.textContent = 'Включить звук';
       button.setAttribute('aria-pressed', 'false');
       status.textContent = '';
     }
     async function play() {
+      const id = ++requestId;
       button.disabled = true;
       try {
         const Audio = window.AudioContext || window.webkitAudioContext;
         context ||= new Audio();
         await context.resume();
-        stop();
+        if (id !== requestId) return;
+        stopSource();
         gain ||= context.createGain();
         gain.disconnect();
         gain.connect(context.destination);
@@ -153,8 +160,11 @@
         button.setAttribute('aria-pressed', 'true');
         button.textContent = 'Выключить звук';
         status.textContent = 'Воспроизводится: ' + select.selectedOptions[0].textContent;
-      } catch { stop(); status.textContent = 'Браузер не смог включить звук. Попробуй ещё раз.'; }
-      finally { button.disabled = false; }
+      } catch {
+        if (id === requestId) { stop(); status.textContent = 'Браузер не смог включить звук. Попробуй ещё раз.'; }
+      } finally {
+        if (id === requestId) button.disabled = false;
+      }
     }
     button.setAttribute('aria-pressed', 'false');
     button.onclick = () => source ? stop() : play();
@@ -164,6 +174,9 @@
       if (gain) gain.gain.setTargetAtTime(prefs.volume / 100 * .55, context.currentTime, .03);
       Storage.set('ef_ambience', prefs);
     };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+    });
     window.addEventListener('pagehide', stop);
     return stop;
   }
@@ -308,9 +321,11 @@
   ];
   function practice(question, state, dictionary) {
     const q = question.trim().toLowerCase();
-    const backToPractice = /^(давай|начн|практик|ielts|разговор)/i.test(q);
+    const command = q.replace(/[?!.]+$/, '').trim();
+    const ielts = /^(ielts speaking part 1:\s*задай вопрос|ielts practice|практика ielts|давай потренируем ielts)$/.test(command);
+    const backToPractice = ielts || /^(давай поговорим( по-английски)?|давай начнём практику|начать (практику|разговор))$/.test(command);
     if (backToPractice) {
-      const prompts = /ielts/i.test(q) ?
+      const prompts = ielts ?
         ['Where do you live?', 'What do you like about your hometown?', 'What would you change about it?'] :
         ['What do you usually do after school or work?', 'What did you do yesterday?', 'What would you like to do next weekend?'];
       state.dialogue = prompts.slice(1);
@@ -322,7 +337,7 @@
       [/\bgoed\b/i, 'went', 'у глагола go неправильная форма прошедшего времени'],
       [/\b(did(?: not|n.t)?) went\b/i, '$1 go', 'после did берём начальную форму'],
       [/\bi am agree\b/i, 'I agree', 'agree — самостоятельный глагол'],
-      [/\b(he|she|it) have\b/i, '$1 has', 'с he/she/it используется has']];
+      [/^(he|she|it)\s+have\b(?!\s+not\b)(?![^.!?]*\?$)/i, '$1 has', 'с he/she/it используется has']];
     const original = question.replace(/^(исправь|проверь|correct)\s*:?\s*/i, '');
     const fix = corrections.find(([pattern]) => pattern.test(original));
     if (fix) {
