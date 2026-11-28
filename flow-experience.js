@@ -174,6 +174,9 @@
       if (gain) gain.gain.setTargetAtTime(prefs.volume / 100 * .55, context.currentTime, .03);
       Storage.set('ef_ambience', prefs);
     };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+    });
     window.addEventListener('pagehide', stop);
     return stop;
   }
